@@ -66,6 +66,9 @@
         .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 18px; text-align: left; border: 1px solid rgba(255,255,255,0.05); }
         .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 22px; font-weight: 800; }
+
+        .toggle-btn { cursor: pointer; border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 8px; font-size: 10px; margin-top: 5px; display: inline-block; transition: 0.2s; }
+        .toggle-btn:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -101,9 +104,20 @@
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
-                <div style="text-align:center"><small style="color:var(--text-dim)">TIME LEFT</small><div id="timer" style="font-size: 28px; font-weight: 800; color:var(--secondary)">60s</div></div>
-                <div style="text-align:center"><small style="color:var(--text-dim)">WORDS/MIN</small><div id="wpm-live" style="font-size: 28px; font-weight: 800; color:var(--primary)">0</div></div>
+            <div style="display: flex; justify-content: space-between; margin: 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;">
+                <div style="text-align:center; flex:1">
+                    <small style="color:var(--text-dim)">TIME LEFT</small>
+                    <div id="timer" style="font-size: 28px; font-weight: 800; color:var(--secondary)">60s</div>
+                    <div class="toggle-btn" onclick="toggleTimerVisibility()">⏱️ ซ่อน/แสดง</div>
+                </div>
+                <div style="text-align:center; flex:1">
+                    <small style="color:var(--text-dim)">CORRECT</small>
+                    <div id="wpm-live" style="font-size: 28px; font-weight: 800; color:var(--primary)">0</div>
+                </div>
+                <div style="text-align:center; flex:1">
+                    <small style="color:var(--text-dim)">WRONG</small>
+                    <div id="wrong-live" style="font-size: 28px; font-weight: 800; color:#ef4444">0</div>
+                </div>
             </div>
 
             <div class="word-display-container" id="display-box">
@@ -178,7 +192,6 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        // --- คลังคำศัพท์ขนาดใหญ่ (1,000++ คำ) ---
         const dict = {
             s1: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป", "ดี", "เลว", "สวย", "หล่อ", "รวย", "จน", "คน", "มด", "ปลา", "แมว", "หมา", "นก", "น้ำ", "ไฟ", "ลม", "ดิน", "ฟ้า", "ใจ", "มือ", "เท้า", "หู", "ตา", "ปาก", "ผม", "ขน", "แดง", "ดำ", "ขาว", "รัก", "เกลียด", "กลัว", "กล้า", "ร้อน", "หนาว", "เย็น", "เผ็ด", "เค็ม", "หวาน", "ขม", "มัน", "ยาว", "สั้น", "สูง", "ต่ำ", "ใกล้", "ไกล", "โต", "เล็ก", "แบก", "หาม", "ขุด", "ตี", "เตะ", "ต่อย", "จูบ", "อม", "เป่า", "หัว", "ท้าย", "ก่อน", "หลัง", "บน", "ล่าง", "ซ้าย", "ขวา", "นอก", "ใน", "แท้", "เทียม", "จริง", "ปลอม", "เร็ว", "ช้า", "ดัง", "ค่อย", "หอม", "เหม็น", "นุ่ม", "แข็ง", "ซื่อ", "คด", "บุญ", "บาป", "พร", "ผี", "พระ", "วัด", "บ้าน", "รถ", "เรือ"],
             s2: ["กะทะ", "ท้องฟ้า", "สายน้ำ", "ศึกษา", "กาแฟ", "น้ำแข็ง", "ส้มตำ", "พริกไทย", "ขนม", "มะม่วง", "พัดลม", "ตู้เย็น", "ปากกา", "สมุด", "ยางลบ", "ตะปู", "ค้อนเหล็ก", "รองเท้า", "เสื้อผ้า", "กางเกง", "เข็มขัด", "แหวนเพชร", "สร้อยคอ", "พูพอง", "อ่อนเพลีย", "แข็งแรง", "ร่าเริง", "สดใส", "ง่วงนอน", "หิวข้าว", "สะอาด", "สกปรก", "วุ่นวาย", "สงบ", "ระฆัง", "กังหัน", "ดอกไม้", "ต้นไม้", "ก้อนหิน", "หาดทราย", "ทะเล", "ภูเขา", "ลำธาร", "ป่าไม้", "สัตว์ป่า", "นกยูง", "ช้างพลาย", "ม้าลาย", "เสือโคร่ง", "สิงโต", "จระเข้", "เป็ดไก่", "วัวควาย", "หมูหมา", "กระต่าย", "กระรอก", "นกแก้ว", "นกเค้า", "มดง่าม", "แมงมุม", "ผีเสื้อ", "แมลง", "เต่าทอง", "ปูนา", "กุ้งแม่", "หอยขม", "ปลาทู", "ปลาช่อน", "ปลากด", "ปลาบู่", "ปลาหมอ", "ปลาดุก", "รากฐาน", "มั่นคง", "ซื่อสัตย์", "อดทน", "พยายาม", "สำเร็จ", "กตัญญู", "ใจดี", "มีวินัย", "พัฒนา", "รวดเร็ว", "แม่นยำ"],
@@ -186,14 +199,12 @@
             shift: ["น้ำ", "ตั๋ว", "ปั๊ม", "นัด", "รัฐ", "สัตว์", "พิษ", "ศิษย์", "ฤทธิ์", "ปฏิบัติ", "ประดิษฐ์", "สิทธิ์", "อิทธิพล", "เศรษฐี", "ปรัชญา", "กษัตริย์", "สัญลักษณ์", "สมบูรณ์", "กังวล", "พยากรณ์"]
         };
 
-        // สร้างชุดคำ 1,000++ แบบสุ่มจังหวะ 1-2-1-3
         function generateGameWords() {
             let pool = [];
             let rhythm = ['s1', 's2', 's1', 's3'];
-            for(let i=0; i<300; i++) { // สร้างเผื่อไว้ 300 ชุด (1,200 คำ)
+            for(let i=0; i<300; i++) {
                 rhythm.forEach(type => {
                     let list = dict[type];
-                    // สอดแทรกคำยาก (Shift) 10%
                     if(Math.random() < 0.1) list = dict.shift;
                     pool.push(list[Math.floor(Math.random()*list.length)]);
                 });
@@ -201,21 +212,37 @@
             return pool;
         }
 
-        let timer, timeLeft, isPlaying = false;
+        let timer, timeLeft, isPlaying = false, isTimerVisible = true;
         let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
         let userXP = 0, userLevel = 1;
 
         function getRobotAvatar(uid) { return `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`; }
         function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
 
+        function toggleTimerVisibility() {
+            isTimerVisible = !isTimerVisible;
+            updateTimerUI();
+        }
+
+        function updateTimerUI() {
+            const timerEl = document.getElementById('timer');
+            if (isTimerVisible) {
+                timerEl.innerText = timeLeft + "s";
+            } else {
+                timerEl.innerText = "---";
+            }
+        }
+
         function calculateLevel(xp) {
             let lvl = 1;
-            let tempXP = xp;
-            while (tempXP >= lvl * 100 && lvl < 150) {
-                tempXP -= lvl * 100;
+            let xpRequired = 100;
+            let remainingXP = xp;
+            while (remainingXP >= xpRequired) {
+                remainingXP -= xpRequired;
                 lvl++;
+                xpRequired = Math.floor(100 * Math.pow(1.2, lvl - 1) + (lvl * 50));
             }
-            return { lvl, currentXP: tempXP, nextXP: lvl * 100 };
+            return { lvl, currentXP: Math.floor(remainingXP), nextXP: Math.floor(xpRequired) };
         }
 
         async function updateUIFromDB(user) {
@@ -246,7 +273,8 @@
             wrapper.innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
             
             document.getElementById('wpm-live').innerText = "0";
-            document.getElementById('timer').innerText = "60s";
+            document.getElementById('wrong-live').innerText = "0";
+            updateTimerUI();
             document.getElementById('typing-input').disabled = false;
             document.getElementById('typing-input').placeholder = "เริ่มพิมพ์ได้เลย!";
             document.getElementById('typing-input').value = '';
@@ -255,7 +283,7 @@
             
             timer = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer').innerText = timeLeft + "s";
+                updateTimerUI();
                 if(timeLeft <= 0) endGame();
             }, 1000);
             updateHighlight();
@@ -296,6 +324,7 @@
                 
                 currentWordIndex++;
                 document.getElementById('wpm-live').innerText = correctWords;
+                document.getElementById('wrong-live').innerText = wrongWords;
                 e.target.value = '';
                 updateHighlight();
             }
@@ -307,8 +336,10 @@
             
             const total = correctWords + wrongWords;
             const accuracy = total > 0 ? Math.round((correctWords / total) * 100) : 0;
-            const xpGained = (correctWords * 15) - (wrongWords * 2);
-            const finalXP = Math.max(0, xpGained);
+            
+            let rawXP = correctWords * 10;
+            let finalXP = Math.round(rawXP * (accuracy / 100));
+            if(finalXP < 5 && correctWords > 0) finalXP = 5;
 
             document.getElementById('res-correct').innerText = correctWords;
             document.getElementById('res-wrong').innerText = wrongWords;
@@ -323,19 +354,18 @@
                 const userRef = db.collection("leaderboard").doc(user.uid);
                 const doc = await userRef.get();
                 const currentData = doc.data() || { xp: 0, wpm: 0 };
-                const newXP = (currentData.xp || 0) + finalXP;
+                const newTotalXP = (currentData.xp || 0) + finalXP;
                 const bestWPM = Math.max(currentData.wpm || 0, correctWords);
                 
                 await userRef.set({ 
-                    xp: newXP, 
+                    xp: newTotalXP, 
                     wpm: bestWPM,
-                    level: calculateLevel(newXP).lvl
+                    level: calculateLevel(newTotalXP).lvl
                 }, { merge: true });
                 updateUIFromDB(user);
                 loadRanking();
             }
             
-            // ล้างคำบนจอออกเมื่อจบเกม
             document.getElementById('word-list-wrapper').innerHTML = "";
             document.getElementById('typing-input').disabled = true;
             document.getElementById('typing-input').placeholder = "กดปุ่มด้านล่างเพื่อเริ่มใหม่";
