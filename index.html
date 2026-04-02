@@ -10,6 +10,7 @@
     
     <style>
         :root {
+            /* Dark Mode (Default) */
             --primary: #2dd4bf;
             --secondary: #fb7185;
             --bg: #0f172a;
@@ -19,75 +20,82 @@
             --input-bg: #020617;
             --xp-color: #3b82f6;
             --accent: #a855f7;
+            --border: rgba(255,255,255,0.1);
+        }
+
+        /* Light Mode Classes */
+        body.light-theme {
+            --primary: #0d9488;
+            --secondary: #e11d48;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-dim: #64748b;
+            --input-bg: #f8fafc;
+            --xp-color: #2563eb;
+            --accent: #7c3aed;
+            --border: rgba(0,0,0,0.1);
         }
         
-        body { font-family: 'Inter', 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Inter', 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         .container { width: 100%; max-width: 750px; padding: 20px; }
-        .card { background: var(--card-bg); border-radius: 28px; padding: 40px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .card { background: var(--card-bg); border-radius: 28px; padding: 40px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); position: relative; }
 
-        .mode-selector { display: flex; background: var(--input-bg); padding: 5px; border-radius: 16px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }
+        /* Theme Toggle Button */
+        .theme-toggle { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 20px; background: var(--input-bg); border: 1px solid var(--border); padding: 8px; border-radius: 12px; }
+
+        .mode-selector { display: flex; background: var(--input-bg); padding: 5px; border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border); }
         .mode-btn { flex: 1; padding: 10px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 700; transition: 0.3s; color: var(--text-dim); }
-        .mode-btn.active { background: var(--primary); color: var(--bg); box-shadow: 0 4px 15px rgba(45, 212, 191, 0.3); }
+        .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(45, 212, 191, 0.3); }
 
-        .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.05); padding: 15px 25px; border-radius: 24px; border: 1px solid var(--border); }
         .avatar-container { position: relative; width: 60px; height: 60px; }
         .user-avatar { width: 100%; height: 100%; border-radius: 16px; object-fit: cover; border: 2px solid var(--primary); background: var(--input-bg); }
-        .lvl-badge { position: absolute; bottom: -5px; right: -5px; background: var(--xp-color); color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 8px; border: 2px solid var(--card-bg); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .lvl-badge { position: absolute; bottom: -5px; right: -5px; background: var(--xp-color); color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 8px; border: 2px solid var(--card-bg); }
         
         .xp-info { flex-grow: 1; margin: 0 20px; }
-        .xp-bar-bg { width: 100%; height: 10px; background: #0f172a; border-radius: 10px; margin-top: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
-        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2dd4bf); width: 0%; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .xp-bar-bg { width: 100%; height: 10px; background: var(--input-bg); border-radius: 10px; margin-top: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--xp-color), var(--primary)); width: 0%; transition: width 0.6s ease; }
 
-        .word-display-container { font-size: 30px; padding: 20px; background: var(--input-bg); border-radius: 22px; margin: 25px 0; height: 110px; overflow: hidden; border: 2px solid #334155; position: relative; line-height: 1.6; }
+        .word-display-container { font-size: 30px; padding: 20px; background: var(--input-bg); border-radius: 22px; margin: 25px 0; height: 110px; overflow: hidden; border: 2px solid var(--border); position: relative; line-height: 1.6; }
         #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 12px 24px; transition: transform 0.3s ease; align-content: flex-start; position: relative; padding-top: 5px; }
         
         .word { color: var(--text-dim); transition: 0.2s; white-space: nowrap; }
-        .word.active { color: var(--text-main); background: rgba(255,255,255,0.05); border-radius: 8px; box-shadow: 0 4px 0 var(--primary); }
+        .word.active { color: var(--text-main); background: rgba(255,255,255,0.1); border-radius: 8px; box-shadow: 0 4px 0 var(--primary); }
         .word.correct { color: var(--primary); }
         .word.incorrect { color: var(--secondary); text-decoration: underline; }
         
-        #typing-input { width: 100%; padding: 22px; background: var(--input-bg); border: 2px solid #334155; border-radius: 20px; font-size: 26px; color: white; outline: none; text-align: center; box-sizing: border-box; transition: 0.3s; }
-        #typing-input:focus { border-color: var(--primary); background: #000; box-shadow: 0 0 30px rgba(45, 212, 191, 0.15); }
+        #typing-input { width: 100%; padding: 22px; background: var(--input-bg); border: 2px solid var(--border); border-radius: 20px; font-size: 26px; color: var(--text-main); outline: none; text-align: center; box-sizing: border-box; transition: 0.3s; }
+        #typing-input:focus { border-color: var(--primary); box-shadow: 0 0 20px rgba(45, 212, 191, 0.1); }
 
         button { border: none; padding: 15px 30px; border-radius: 15px; cursor: pointer; font-weight: 700; transition: 0.2s; font-family: 'Kanit'; }
-        .btn-primary { background: var(--primary); color: var(--bg); width: 100%; margin-top: 20px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .btn-secondary { background: var(--secondary); color: white; width: 100%; margin-top: 10px; font-size: 16px; }
-        .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid #334155; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; margin-top: 20px; font-size: 18px; text-transform: uppercase; }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-secondary { background: var(--secondary); color: white; width: 100%; margin-top: 10px; }
+        .btn-ghost { background: var(--input-bg); color: var(--text-dim); border: 1px solid var(--border); }
         
-        .modal { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(10px); }
-        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; border: 1px solid var(--primary); }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; border: 1px solid var(--primary); color: var(--text-main); }
         
         .hidden { display: none !important; }
-        .invisible-text { color: transparent !important; user-select: none; }
-        .std-input { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid #334155; border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; }
+        .invisible-text { color: transparent !important; }
+        .std-input { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); margin-bottom: 15px; box-sizing: border-box; }
         
-        #leaderboard-list { margin-top: 15px; background: rgba(0,0,0,0.3); border-radius: 20px; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
-        .rank-item:hover { background: rgba(255,255,255,0.05); }
+        #leaderboard-list { margin-top: 15px; background: rgba(0,0,0,0.05); border-radius: 20px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid var(--border); }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); }
         .rank-avatar-box { position: relative; width: 42px; height: 42px; }
-        .rank-avatar { width: 100%; height: 100%; border-radius: 10px; object-fit: cover; background: #0f172a; }
-        .rank-lvl { position: absolute; top: -5px; left: -5px; background: var(--xp-color); color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; font-weight: bold; border: 1px solid var(--card-bg); }
-        .user-title { font-size: 10px; display: block; margin-top: 2px; font-weight: bold; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 18px; text-align: left; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
-        .stat-value { font-size: 22px; font-weight: 800; }
+        .rank-avatar { width: 100%; height: 100%; border-radius: 10px; object-fit: cover; background: #ccc; }
+        .rank-lvl { position: absolute; top: -5px; left: -5px; background: var(--xp-color); color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--card-bg); }
 
-        .timer-toggle-container { margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(14px); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-box { background: rgba(0,0,0,0.05); padding: 15px; border-radius: 18px; text-align: left; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div id="auth-ui" class="card">
+            <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
             <h2 style="text-align: center; margin-bottom: 30px;">🌍 TYPING WORLD RACE</h2>
             <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้">
             <input type="password" id="login-pass" class="std-input" placeholder="รหัสผ่าน">
@@ -98,6 +106,7 @@
         </div>
 
         <div id="game-ui" class="card hidden">
+            <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
             <div class="profile-bar">
                 <div class="avatar-container">
                     <img id="display-avatar" class="user-avatar" src="">
@@ -122,17 +131,10 @@
                 <div class="mode-btn" id="mode-en" onclick="switchMode('en')">🇺🇸 ENGLISH</div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; margin: 15px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;">
+            <div style="display: flex; justify-content: space-between; margin: 15px 0; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 20px; border: 1px solid var(--border);">
                 <div style="text-align:center; flex:1">
                     <small style="color:var(--text-dim)">TIME</small>
                     <div id="timer" style="font-size: 28px; font-weight: 800; color:var(--secondary)">60s</div>
-                    <label class="timer-toggle-container">
-                        <label class="switch">
-                            <input type="checkbox" id="toggle-timer-checkbox" checked onchange="toggleTimerVisibility()">
-                            <span class="slider"></span>
-                        </label>
-                        <small style="color:var(--text-dim); font-size: 9px;">SHOW</small>
-                    </label>
                 </div>
                 <div style="text-align:center; flex:1">
                     <small style="color:var(--text-dim)">CORRECT</small>
@@ -140,7 +142,7 @@
                 </div>
                 <div style="text-align:center; flex:1">
                     <small style="color:var(--text-dim)">WRONG</small>
-                    <div id="wrong-live" style="font-size: 28px; font-weight: 800; color:#ef4444">0</div>
+                    <div id="wrong-live" style="font-size: 28px; font-weight: 800; color:var(--secondary)">0</div>
                 </div>
             </div>
 
@@ -155,12 +157,8 @@
             </div>
 
             <div style="margin-top: 30px;">
-                <h4 id="leaderboard-title" style="font-size: 13px; color: var(--primary); margin-bottom: 10px; text-align: center; letter-spacing: 2px; text-transform: uppercase;">
-                    🏆 THAI TOP RACERS (TOP 100)
-                </h4>
-                <div id="leaderboard-list">
-                    <div style="text-align:center; padding:20px; color:var(--text-dim)">กำลังโหลดอันดับ...</div>
-                </div>
+                <h4 id="leaderboard-title" style="font-size: 11px; color: var(--primary); margin-bottom: 10px; text-align: center; letter-spacing: 2px;">🏆 TOP 100 RACERS</h4>
+                <div id="leaderboard-list"></div>
             </div>
         </div>
     </div>
@@ -168,20 +166,17 @@
     <div id="result-modal" class="modal hidden">
         <div class="modal-content">
             <h2 style="color: var(--primary); font-size: 32px; margin-bottom: 5px;">FINISHED! 🏁</h2>
-            <div id="res-mode-text" style="color: var(--text-dim); margin-bottom: 20px;"></div>
             <div class="stats-grid">
                 <div class="stat-box">
-                    <div class="stat-label">ถูกต้อง</div>
-                    <div id="res-correct" class="stat-value" style="color: var(--primary);">0</div>
+                    <small>ถูกต้อง</small>
+                    <div id="res-correct" style="font-size: 24px; font-weight: 800; color: var(--primary);">0</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">แม่นยำ</div>
-                    <div id="res-acc" class="stat-value" style="color: #eab308;">0%</div>
+                    <small>แม่นยำ</small>
+                    <div id="res-acc" style="font-size: 24px; font-weight: 800; color: #eab308;">0%</div>
                 </div>
             </div>
-            <div id="xp-gain-text" style="background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), rgba(45, 212, 191, 0.2)); padding: 20px; border-radius: 20px; color: #60a5fa; font-size: 28px; font-weight: 900; margin-bottom: 25px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                +0 EXP
-            </div>
+            <div id="xp-gain-text" style="font-size: 28px; font-weight: 900; color: var(--xp-color); margin-bottom: 20px;">+0 EXP</div>
             <button class="btn-primary" onclick="closeResult()">CONTINUE</button>
         </div>
     </div>
@@ -190,14 +185,14 @@
         <div class="modal-content">
             <h3>Edit Profile</h3>
             <input type="file" id="file-input" accept="image/*" class="std-input" onchange="previewFile()">
-            <input type="text" id="edit-name" class="std-input" placeholder="ชื่อที่จะให้แสดง">
+            <input type="text" id="edit-name" class="std-input" placeholder="ชื่อใหม่ของคุณ">
             <button class="btn-primary" onclick="saveProfile()">SAVE</button>
             <button class="btn-ghost" style="width:100%; margin-top:10px;" onclick="toggleModal('profile-modal', false)">CANCEL</button>
         </div>
     </div>
 
     <script>
-        // Firebase Config
+        // Firebase Config (คงเดิมจากโค้ดของคุณ)
         const firebaseConfig = {
             apiKey: "AIzaSyC4lXsegdu_1H9coMKQNiPWj3Bg2sPxT-0",
             authDomain: "thaityping-5b95f.firebaseapp.com",
@@ -209,35 +204,53 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        const dict = {
-            th: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป", "ดี", "ใจ", "มือ", "ตา", "หู", "น้ำ", "ไฟ", "รัก", "บ้าน", "รถ", "คน", "มด", "นก", "สวย", "หล่อ", "รวย", "จน", "บน", "ล่าง", "ซ้าย", "ขวา", "กาแฟ", "ส้มตำ", "โรงเรียน", "ทำงาน", "ขยัน", "ร่าเริง", "สดใส", "ต้นไม้", "ภูเขา", "ทะเล", "ท้องฟ้า", "อาหาร", "ขนม", "เรียน", "เล่น", "คอมพิวเตอร์", "มือถือ"],
-            en: ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "work", "play", "love", "game", "fire", "water", "earth", "wind", "blue", "red", "green", "happy", "smile", "world", "space", "light", "dark", "bird", "fish", "small", "large", "ready", "start", "finish", "code", "best", "cool", "never", "always", "today", "future"]
+        // คลังคำศัพท์ที่ปรับปรุงแล้ว
+        const dict_1_syl = {
+            th: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป", "ดี", "ใจ", "มือ", "ตา", "หู", "น้ำ", "ไฟ", "รัก", "บ้าน", "รถ", "คน", "มด", "นก", "บน", "ล่าง", "ซ้าย", "ขวา", "เรียน", "เล่น", "ทำ", "สวย", "รวย", "จน", "ค่ะ", "ครับ", "เรา", "เธอ", "เขา", "ใน", "นอก", "ปัด", "เป่า", "แปรง", "เขียน", "อ่าน", "ฟัง", "ชาม", "แก้ว", "จาน", "ไฟ", "ดิน", "ลม", "ฝน", "ฟ้า", "ขาว", "ดำ", "แดง", "เขียว", "ทอง", "เงิน", "งาน", "พัก", "ผ่อน", "ยิ้ม", "ขำ", "หมู", "หมา", "แมว", "ม้า", "ปลา", "ปู", "งู", "ไม้", "ไก่", "ไข่", "น้า", "อา", "ป้า", "ลุง", "แม่", "พ่อ", "พี่", "น้อง", "คุณ", "ท่าน", "เนย", "นม", "กาง", "แขน", "ขา", "เอว", "ท้อง", "ฟัน", "ปาก", "จมูก", "แก้ม", "คิ้ว", "ผม", "ขน", "เล็บ", "นิ้ว", "ตัว"],
+            en: ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "work", "play", "love", "game", "fire", "water", "earth", "wind", "blue", "red", "green", "bird", "fish", "small", "large", "ready", "start", "code", "best", "cool", "now", "here", "there", "some", "more", "last", "next", "page", "text", "font", "size", "dark", "light", "home", "back", "show", "hide", "save", "edit", "user", "name", "pass", "file", "web", "app", "site", "link", "bold", "time", "date", "year", "day", "way", "car", "bus", "ship", "road", "sky", "moon", "star", "sun", "tree", "leaf", "root", "seed", "wall", "door", "room", "key", "box", "bag", "cup", "pen", "book", "boy", "girl", "man", "kid", "son", "old", "new", "low", "high"]
+        };
+
+        const dict_2_syl = {
+            th: ["กระท่อม", "บริษัท", "ทำงาน", "ขยัน", "ร่าเริง", "สดใส", "ต้นไม้", "ภูเขา", "ทะเล", "อาหาร", "ขนม", "สะอาด", "ท้องฟ้า", "กะเพรา", "มะม่วง", "ปากกา", "สมุด", "ดินสอ", "เก้าอี้", "โต๊ะเรียน", "รองเท้า", "ถุงเท้า", "เสื้อผ้า", "นาฬิกา", "มือถือ", "คอมพิวเตอร์", "น้ำหวาน", "กาแฟ", "ส้มตำ", "โรงเรียน", "ตลาด", "ร่มเงา", "ความสุข", "จริงใจ", "อดทน", "ใจดี", "ก้าวหน้า", "ชีวิต", "มุ่งมั่น", "มั่งคั่ง"],
+            en: ["apple", "orange", "coding", "active", "bright", "forest", "mountain", "ocean", "happy", "dinner", "morning", "evening", "flower", "winter", "summer", "weather", "stable", "school", "office", "laptop", "mobile", "coffee", "sugar", "market", "leader", "member", "people", "future", "system", "window", "player", "music", "button", "screen", "header", "footer", "content", "border", "shadow", "layout"]
         };
 
         let currentMode = 'th', timer = null, timeLeft, isPlaying = false;
         let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [], userXP = 0;
 
+        // Theme Toggle Function
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        }
+
+        // Initialize Theme
+        if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
+
+        function generateMixedWords(mode) {
+            let words = [];
+            const oneSyl = dict_1_syl[mode];
+            const twoSyl = dict_2_syl[mode];
+            
+            for(let i=0; i<100; i++) { // วน 100 รอบ จะได้ 500 คำ
+                // เพิ่ม 1 พยางค์ 4 คำ
+                for(let j=0; j<4; j++) {
+                    words.push(oneSyl[Math.floor(Math.random() * oneSyl.length)]);
+                }
+                // เพิ่ม 2 พยางค์ 1 คำ
+                words.push(twoSyl[Math.floor(Math.random() * twoSyl.length)]);
+            }
+            return words;
+        }
+
         function getRobotAvatar(uid) { return `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`; }
         function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
-
-        function toggleTimerVisibility() {
-            const isChecked = document.getElementById('toggle-timer-checkbox').checked;
-            document.getElementById('timer').classList.toggle('invisible-text', !isChecked);
-        }
 
         function calculateLevel(xp) {
             let lvl = 1, xpReq = 100, rem = xp;
             while (rem >= xpReq) { rem -= xpReq; lvl++; xpReq = Math.floor(100 * Math.pow(1.2, lvl - 1) + (lvl * 50)); }
             return { lvl, currentXP: Math.floor(rem), nextXP: Math.floor(xpReq) };
-        }
-
-        function getTitle(wpm) {
-            if (wpm >= 100) return { text: "⚡ เทพเจ้าสายฟ้า", color: "#fcd34d" };
-            if (wpm >= 80) return { text: "🚀 นักซิ่งทางด่วน", color: "#fb7185" };
-            if (wpm >= 60) return { text: "🔥 มือเพลิงพระกาฬ", color: "#f97316" };
-            if (wpm >= 40) return { text: "🎯 นักล่าแต้ม", color: "#2dd4bf" };
-            if (wpm >= 20) return { text: "🏹 ขุนศึกฝึกหัด", color: "#60a5fa" };
-            return { text: "🐌 หอยทากน้อย", color: "#94a3b8" };
         }
 
         async function updateUIFromDB(user) {
@@ -259,8 +272,6 @@
             currentMode = mode;
             document.getElementById('mode-th').classList.toggle('active', mode === 'th');
             document.getElementById('mode-en').classList.toggle('active', mode === 'en');
-            document.getElementById('leaderboard-title').innerText = mode === 'th' ? "🏆 THAI TOP RACERS (TOP 100)" : "🏆 ENGLISH TOP RACERS (TOP 100)";
-            document.getElementById('leaderboard-title').style.color = mode === 'th' ? 'var(--primary)' : 'var(--accent)';
             loadRanking();
         }
 
@@ -268,11 +279,11 @@
             if(isPlaying) return;
             isPlaying = true;
             timeLeft = 60; correctWords = 0; wrongWords = 0; currentWordIndex = 0;
-            gameWords = Array.from({length: 200}, () => dict[currentMode][Math.floor(Math.random()*dict[currentMode].length)]);
+            gameWords = generateMixedWords(currentMode);
             
             const wrapper = document.getElementById('word-list-wrapper');
             wrapper.style.transform = `translateY(0px)`;
-            wrapper.innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
+            wrapper.innerHTML = gameWords.slice(0, 100).map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
             
             document.getElementById('wpm-live').innerText = "0";
             document.getElementById('wrong-live').innerText = "0";
@@ -302,15 +313,11 @@
             document.getElementById('typing-input').disabled = true;
             document.getElementById('start-btn').classList.remove('hidden');
             document.getElementById('stop-btn').classList.add('hidden');
-            // ล้างคำศัพท์ออกจากหน้าจอ
             document.getElementById('word-list-wrapper').innerHTML = '';
-            document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
         }
 
         function resetGameManually() {
-            if(confirm("ต้องการหยุดเวลาและยกเลิกเกมนี้ใช่ไหม?")) {
-                resetGameState();
-            }
+            if(confirm("ต้องการยกเลิกเกมนี้ใช่ไหม?")) resetGameState();
         }
 
         function updateHighlight() {
@@ -329,8 +336,13 @@
                 if(typed === "") { e.target.value = ''; return; }
                 const el = document.getElementById(`w-${currentWordIndex}`);
                 if(el) {
-                    if(typed === gameWords[currentWordIndex]) { correctWords++; el.classList.add('correct'); }
-                    else { wrongWords++; el.classList.add('incorrect'); }
+                    if(typed === gameWords[currentWordIndex]) { 
+                        correctWords++; 
+                        el.classList.add('correct'); 
+                    } else { 
+                        wrongWords++; 
+                        el.classList.add('incorrect'); 
+                    }
                     currentWordIndex++;
                     document.getElementById('wpm-live').innerText = correctWords;
                     document.getElementById('wrong-live').innerText = wrongWords;
@@ -343,106 +355,71 @@
         async function endGame() {
             const finalCorrect = correctWords;
             const finalWrong = wrongWords;
-            
-            // 1. ล้างสถานะเกมและลบคำศัพท์ทันที
             resetGameState();
 
-            // 2. คำนวณผลลัพธ์
             const total = finalCorrect + finalWrong;
             const accuracy = total > 0 ? Math.round((finalCorrect / total) * 100) : 0;
             let finalXP = Math.max(5, Math.round((finalCorrect * 10) * (accuracy / 100)));
 
-            // 3. แสดง Modal ผลลัพธ์
             document.getElementById('res-correct').innerText = finalCorrect;
             document.getElementById('res-acc').innerText = accuracy + "%";
-            document.getElementById('res-mode-text').innerText = `MODE: ${currentMode.toUpperCase()}`;
             document.getElementById('xp-gain-text').innerText = `+${finalXP} EXP`;
             toggleModal('result-modal', true);
 
-            // 4. บันทึกข้อมูลลง Firebase
             const user = auth.currentUser;
             if (user) {
                 const newXP = userXP + finalXP;
                 await db.collection("users").doc(user.uid).set({ xp: newXP }, { merge: true });
-                
-                const userDoc = await db.collection("users").doc(user.uid).get();
-                const uData = userDoc.data();
                 
                 const lbRef = db.collection(`leaderboard_${currentMode}`).doc(user.uid);
                 const currentLB = await lbRef.get();
                 const bestWPM = Math.max((currentLB.data()?.wpm || 0), finalCorrect);
                 
                 await lbRef.set({ 
-                    name: uData.name || "Unknown", 
+                    name: document.getElementById('display-name').innerText, 
                     wpm: bestWPM, 
-                    photo: uData.photo || "", 
+                    photo: document.getElementById('display-avatar').src, 
                     xp: newXP 
                 });
-                
                 updateUIFromDB(user); 
                 loadRanking();
             }
         }
 
         async function loadRanking() {
-            try {
-                const snap = await db.collection(`leaderboard_${currentMode}`)
-                    .orderBy("wpm", "desc")
-                    .limit(100)
-                    .get();
-                
-                let html = ''; 
-                let idx = 1;
-
-                if (snap.empty) {
-                    html = '<div style="text-align:center; padding:20px; color:var(--text-dim)">ยังไม่มีคะแนนในโหมดนี้</div>';
-                } else {
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        const lv = calculateLevel(d.xp || 0).lvl;
-                        const titleData = getTitle(d.wpm || 0);
-                        
-                        html += `
-                        <div class="rank-item">
-                            <div style="display:flex; align-items:center; gap:12px">
-                                <small style="color:var(--text-dim); width: 25px;">${idx}</small>
-                                <div class="rank-avatar-box">
-                                    <img src="${d.photo || getRobotAvatar(doc.id)}" class="rank-avatar">
-                                    <span class="rank-lvl">${lv}</span>
-                                </div>
-                                <div>
-                                    <span style="font-weight: 600; font-size: 14px;">${d.name || 'Unknown'}</span>
-                                    <span class="user-title" style="color: ${titleData.color}">${titleData.text}</span>
-                                </div>
-                            </div>
-                            <div style="text-align: right">
-                                <strong style="color:${currentMode === 'th' ? 'var(--primary)' : 'var(--accent)'}; font-size: 18px;">${d.wpm || 0}</strong>
-                                <small style="color: var(--text-dim); font-size: 10px; display: block; margin-top: -4px;">WPM</small>
-                            </div>
-                        </div>`;
-                        idx++;
-                    });
-                }
-                document.getElementById('leaderboard-list').innerHTML = html;
-            } catch (error) {
-                console.error("Leaderboard Error:", error);
-                document.getElementById('leaderboard-list').innerHTML = '<div style="text-align:center; padding:20px; color:#ef4444">ไม่สามารถโหลดอันดับได้</div>';
-            }
+            const snap = await db.collection(`leaderboard_${currentMode}`).orderBy("wpm", "desc").limit(100).get();
+            let html = '';
+            let idx = 1;
+            snap.forEach(doc => {
+                const d = doc.data();
+                const lv = calculateLevel(d.xp || 0).lvl;
+                html += `
+                <div class="rank-item">
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <small style="color:var(--text-dim); width:20px">${idx++}</small>
+                        <div class="rank-avatar-box">
+                            <img src="${d.photo || getRobotAvatar(doc.id)}" class="rank-avatar">
+                            <span class="rank-lvl">${lv}</span>
+                        </div>
+                        <span style="font-weight:600; font-size:14px">${d.name}</span>
+                    </div>
+                    <strong style="color:var(--primary)">${d.wpm} <small style="font-size:9px">WPM</small></strong>
+                </div>`;
+            });
+            document.getElementById('leaderboard-list').innerHTML = html || '<div style="text-align:center; padding:20px; color:var(--text-dim)">No data</div>';
         }
 
         async function handleAuth(type) {
             const u = document.getElementById('login-user').value.trim();
             const p = document.getElementById('login-pass').value;
             if(!u || p.length < 6) return alert("ชื่อและรหัสผ่าน 6 ตัวขึ้นไป");
-            const safeEmail = btoa(unescape(encodeURIComponent(u))).substring(0,15) + "@typing.com";
+            const safeEmail = btoa(u).substring(0,15) + "@typing.com";
             try {
                 if(type === 'up') {
                     const res = await auth.createUserWithEmailAndPassword(safeEmail, p);
                     await db.collection("users").doc(res.user.uid).set({ name: u, xp: 0 });
-                } else { 
-                    await auth.signInWithEmailAndPassword(safeEmail, p); 
-                }
-            } catch(e) { alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"); }
+                } else { await auth.signInWithEmailAndPassword(safeEmail, p); }
+            } catch(e) { alert("เกิดข้อผิดพลาดในการเข้าสู่ระบบ"); }
         }
 
         let base64Avatar = "";
@@ -468,8 +445,7 @@
             if(user) {
                 toggleModal('auth-ui', false); 
                 document.getElementById('game-ui').classList.remove('hidden');
-                updateUIFromDB(user); 
-                loadRanking();
+                updateUIFromDB(user); loadRanking();
             } else {
                 toggleModal('auth-ui', true); 
                 document.getElementById('game-ui').classList.add('hidden');
