@@ -86,9 +86,10 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
         .stat-box { background: rgba(0,0,0,0.05); padding: 15px; border-radius: 18px; text-align: left; border: 1px solid var(--border); }
 
-        .timer-toggle-btn { cursor: pointer; font-size: 14px; opacity: 0.5; transition: 0.3s; vertical-align: middle; margin-left: 5px; }
-        .timer-toggle-btn:hover { opacity: 1; }
-        .hidden-timer { color: transparent !important; text-shadow: 0 0 8px var(--secondary); user-select: none; }
+        .toggle-eye { cursor: pointer; font-size: 14px; opacity: 0.5; transition: 0.3s; vertical-align: middle; margin-left: 5px; }
+        .toggle-eye:hover { opacity: 1; }
+        .hidden-value { color: transparent !important; text-shadow: 0 0 8px var(--primary); user-select: none; }
+        .hidden-value-red { color: transparent !important; text-shadow: 0 0 8px var(--secondary); user-select: none; }
     </style>
 </head>
 <body>
@@ -133,15 +134,15 @@
 
             <div style="display: flex; justify-content: space-between; margin: 15px 0; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 20px; border: 1px solid var(--border);">
                 <div style="text-align:center; flex:1">
-                    <small style="color:var(--text-dim)">TIME <span class="timer-toggle-btn" onclick="toggleTimerVisibility()">👁️</span></small>
+                    <small style="color:var(--text-dim)">TIME <span class="toggle-eye" onclick="toggleVisibility('timer', 'hidden-value-red')">👁️</span></small>
                     <div id="timer" style="font-size: 28px; font-weight: 800; color:var(--secondary)">60s</div>
                 </div>
                 <div style="text-align:center; flex:1">
-                    <small style="color:var(--text-dim)">CORRECT</small>
+                    <small style="color:var(--text-dim)">CORRECT <span class="toggle-eye" onclick="toggleVisibility('wpm-live', 'hidden-value')">👁️</span></small>
                     <div id="wpm-live" style="font-size: 28px; font-weight: 800; color:var(--primary)">0</div>
                 </div>
                 <div style="text-align:center; flex:1">
-                    <small style="color:var(--text-dim)">WRONG</small>
+                    <small style="color:var(--text-dim)">WRONG <span class="toggle-eye" onclick="toggleVisibility('wrong-live', 'hidden-value-red')">👁️</span></small>
                     <div id="wrong-live" style="font-size: 28px; font-weight: 800; color:var(--secondary)">0</div>
                 </div>
             </div>
@@ -215,11 +216,9 @@
 
         let currentMode = 'th', timer = null, timeLeft, isPlaying = false;
         let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [], userXP = 0;
-        let isTimerHidden = false;
 
-        function toggleTimerVisibility() {
-            isTimerHidden = !isTimerHidden;
-            document.getElementById('timer').classList.toggle('hidden-timer', isTimerHidden);
+        function toggleVisibility(id, className) {
+            document.getElementById(id).classList.toggle(className);
         }
 
         function toggleTheme() {
@@ -229,13 +228,11 @@
 
         if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
 
-        // แก้ไข: สุ่มคำได้ไม่จำกัด (สุ่ม 1000 คำ เผื่อคนพิมพ์ไวมากๆ)
         function generateMixedWords(mode) {
             let words = [];
             const oneSyl = dict_1_syl[mode];
             const twoSyl = dict_2_syl[mode];
             for(let i=0; i<1000; i++) {
-                // อัตราส่วน 1 พยางค์ 4 คำ : 2 พยางค์ 1 คำ
                 if(Math.random() > 0.2) {
                     words.push(oneSyl[Math.floor(Math.random() * oneSyl.length)]);
                 } else {
@@ -284,7 +281,6 @@
             
             const wrapper = document.getElementById('word-list-wrapper');
             wrapper.style.transform = `translateY(0px)`;
-            // แสดงผล 200 คำแรกก่อนเพื่อประหยัด RAM
             wrapper.innerHTML = gameWords.slice(0, 200).map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
             
             document.getElementById('wpm-live').innerText = "0";
@@ -328,7 +324,6 @@
             const cur = document.getElementById(`w-${currentWordIndex}`);
             if(cur) {
                 cur.classList.add('active');
-                // เลื่อนหน้าจอเมื่อพิมพ์ถึงบรรทัดใหม่
                 if (cur.offsetTop > 45) {
                     wrapper.style.transform = `translateY(-${cur.offsetTop - 10}px)`;
                 }
@@ -353,7 +348,6 @@
                     document.getElementById('wrong-live').innerText = wrongWords;
                     e.target.value = '';
                     
-                    // ถ้าใกล้หมดคำที่ Render ไว้ (เช่นถึงคำที่ 180) ให้เพิ่มคำใหม่เข้าไป
                     if(currentWordIndex % 150 === 0) {
                         const nextBatch = gameWords.slice(currentWordIndex + 50, currentWordIndex + 250);
                         nextBatch.forEach((w, idx) => {
@@ -364,7 +358,6 @@
                             document.getElementById('word-list-wrapper').appendChild(span);
                         });
                     }
-
                     updateHighlight();
                 }
             }
@@ -396,7 +389,7 @@
                     wpm: bestWPM, 
                     photo: document.getElementById('display-avatar').src, 
                     xp: newXP 
-                });
+                }, { merge: true });
                 updateUIFromDB(user); 
                 loadRanking();
             }
@@ -450,11 +443,31 @@
             const newName = document.getElementById('edit-name').value.trim();
             const user = auth.currentUser;
             if(!user) return;
+            
             let updateData = {};
             if(newName) updateData.name = newName;
             if(base64Avatar) updateData.photo = base64Avatar;
+            
+            if(Object.keys(updateData).length === 0) return;
+
+            // 1. Update main user document
             await db.collection("users").doc(user.uid).set(updateData, { merge: true });
-            updateUIFromDB(user); toggleModal('profile-modal', false);
+            
+            // 2. Update all leaderboards where this user exists
+            const modes = ['th', 'en'];
+            for(const m of modes) {
+                const lbRef = db.collection(`leaderboard_${m}`).doc(user.uid);
+                const lbDoc = await lbRef.get();
+                if(lbDoc.exists) {
+                    await lbRef.set(updateData, { merge: true });
+                }
+            }
+
+            base64Avatar = ""; // Reset temporary storage
+            updateUIFromDB(user); 
+            loadRanking();
+            toggleModal('profile-modal', false);
+            alert("บันทึกข้อมูลเรียบร้อยแล้ว");
         }
 
         auth.onAuthStateChanged(user => {
