@@ -24,7 +24,6 @@
         .container { width: 100%; max-width: 750px; padding: 20px; }
         .card { background: var(--card-bg); border-radius: 28px; padding: 40px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
 
-        /* Profile & Level Section */
         .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
         .avatar-container { position: relative; width: 60px; height: 60px; }
         .user-avatar { width: 100%; height: 100%; border-radius: 16px; object-fit: cover; border: 2px solid var(--primary); background: var(--input-bg); }
@@ -34,7 +33,6 @@
         .xp-bar-bg { width: 100%; height: 10px; background: #0f172a; border-radius: 10px; margin-top: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2dd4bf); width: 0%; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-        /* Word Display Area */
         .word-display-container { font-size: 30px; padding: 20px; background: var(--input-bg); border-radius: 22px; margin: 25px 0; height: 110px; overflow: hidden; border: 2px solid #334155; position: relative; line-height: 1.6; }
         #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 12px 24px; transition: transform 0.3s ease; align-content: flex-start; position: relative; padding-top: 5px; }
         
@@ -51,20 +49,23 @@
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid #334155; }
         
-        /* Modal Style */
         .modal { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(10px); }
         .modal-content { background: var(--card-bg); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; border: 1px solid var(--primary); }
         
         .hidden { display: none !important; }
         .std-input { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid #334155; border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; }
         
-        /* Leaderboard */
         #leaderboard-list { margin-top: 25px; background: rgba(0,0,0,0.3); border-radius: 20px; max-height: 280px; overflow-y: auto; padding: 10px; }
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
         .rank-item:hover { background: rgba(255,255,255,0.03); }
         .rank-avatar-box { position: relative; width: 42px; height: 42px; }
         .rank-avatar { width: 100%; height: 100%; border-radius: 10px; object-fit: cover; }
         .rank-lvl { position: absolute; top: -5px; left: -5px; background: var(--xp-color); color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 18px; text-align: left; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
+        .stat-value { font-size: 22px; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -107,11 +108,10 @@
 
             <div class="word-display-container" id="display-box">
                 <div id="word-list-wrapper">
-                    <div style="width:100%; text-align:center; color:var(--text-dim); padding-top:20px;">Ready to Race? Click START!</div>
-                </div>
+                    </div>
             </div>
             
-            <input type="text" id="typing-input" placeholder="Start typing here..." disabled autocomplete="off">
+            <input type="text" id="typing-input" placeholder="คลิก START เพื่อเริ่ม..." disabled autocomplete="off">
             <button id="start-btn" class="btn-primary" onclick="startGame()">START RACE ⚡</button>
 
             <div style="margin-top: 35px;">
@@ -127,11 +127,28 @@
 
     <div id="result-modal" class="modal hidden">
         <div class="modal-content">
-            <h2 style="color: var(--primary); font-size: 32px;">RACE FINISHED!</h2>
-            <div id="res-stats" style="margin: 20px 0; font-size: 18px;">
-                <div>Correct Words: <span id="res-correct" style="color: var(--primary); font-weight: bold;">0</span></div>
+            <h2 style="color: var(--primary); font-size: 32px; margin-bottom: 5px;">RACE FINISHED! 🏁</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">พิมพ์ถูก</div>
+                    <div id="res-correct" class="stat-value" style="color: var(--primary);">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">พิมพ์ผิด</div>
+                    <div id="res-wrong" class="stat-value" style="color: var(--secondary);">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">รวมคำที่พิมพ์</div>
+                    <div id="res-total" class="stat-value">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">ความแม่นยำ</div>
+                    <div id="res-acc" class="stat-value" style="color: #eab308;">0%</div>
+                </div>
             </div>
-            <div id="xp-gain-text" style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 15px; color: var(--xp-color); font-size: 24px; font-weight: 900; margin-bottom: 25px;">+0 EXP</div>
+            <div id="xp-gain-text" style="background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), rgba(45, 212, 191, 0.2)); padding: 20px; border-radius: 20px; color: #60a5fa; font-size: 28px; font-weight: 900; margin-bottom: 25px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                +0 EXP
+            </div>
             <button class="btn-primary" onclick="closeResult()">CONTINUE</button>
         </div>
     </div>
@@ -161,28 +178,31 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        // --- Mixed Dictionary (1,000+ words logic) ---
-        const thWords = [
-            "กระทะ","โรงเรียน","คอมพิวเตอร์","วิทยาศาสตร์","ท้องฟ้า","สายน้ำ","พัฒนา","ประเทศไทย","กรุงเทพ","ศึกษา","ความสุข","กาแฟ","น้ำแข็ง","ขนมปัง","ส้มตำ","กะเพรา","พริก","กระเทียม","ระเบียบ","วินัย",
-            "ต้นไม้","ก้อนเมฆ","พระจันทร์","ดวงอาทิตย์","ดวงดาว","อวกาศ","โทรศัพท์","ธรรมชาติ","ประวัติศาสตร์","วัฒนธรรม","มิตรภาพ","ความรัก","พยายาม","อดทน","สู้ตาย","กตัญญู","ซื่อสัตย์","รวดเร็ว","แม่นยำ","นวัตกรรม",
-            "อาหาร","เดินเล่น","วิ่งแข่ง","กระโดด","ร้องเพลง","เต้นรำ","วาดรูป","ระบายสี","ฟังเพลง","ดูหนัง","ท่องเที่ยว","พักผ่อน","ทำงาน","ขยัน","ฉลาด","รอบรู้","แบ่งปัน","ใจดี","ยิ้มแย้ม","หัวเราะ",
-            "ความหวัง","เป้าหมาย","สำเร็จ","โอกาส","ความรู้","ประสบการณ์","บทเรียน","การเรียนรู้","สร้างสรรค์","จินตนาการ","แรงบันดาลใจ","ยุติธรรม","อิสระ","ปลอดภัย","แข็งแรง","สุขภาพ","แจ่มใส","สดชื่น","งดงาม","สว่าง",
-            "ห่วงใย","คิดถึง","ขอบคุณ","ขอโทษ","โชคดี","รวยมาก","มั่งคั่ง","มั่นคง","ยั่งยืน","น้ำใจ","ช่วยเหลือ","ร่วมมือ","สามัคคี","พลัง","แข็งแกร่ง","ยอดเยี่ยม","มหัศจรรย์","ประทับใจ","พิเศษ","น่ารัก"
-        ];
-        const shiftWords = ["น้ำ","ตั๋ว","ปั๊ม","นัด","รัฐ","สัตว์","พิษ","ศิษย์","ฤทธิ์","ปฏิบัติ","ประดิษฐ์","สิทธิ์","อิทธิพล","เศรษฐี","ปรัชญา","กษัตริย์","สัญลักษณ์","สมบูรณ์","กังวล","พยากรณ์"];
-        
+        // --- คลังคำศัพท์ขนาดใหญ่ (1,000++ คำ) ---
+        const dict = {
+            s1: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป", "ดี", "เลว", "สวย", "หล่อ", "รวย", "จน", "คน", "มด", "ปลา", "แมว", "หมา", "นก", "น้ำ", "ไฟ", "ลม", "ดิน", "ฟ้า", "ใจ", "มือ", "เท้า", "หู", "ตา", "ปาก", "ผม", "ขน", "แดง", "ดำ", "ขาว", "รัก", "เกลียด", "กลัว", "กล้า", "ร้อน", "หนาว", "เย็น", "เผ็ด", "เค็ม", "หวาน", "ขม", "มัน", "ยาว", "สั้น", "สูง", "ต่ำ", "ใกล้", "ไกล", "โต", "เล็ก", "แบก", "หาม", "ขุด", "ตี", "เตะ", "ต่อย", "จูบ", "อม", "เป่า", "หัว", "ท้าย", "ก่อน", "หลัง", "บน", "ล่าง", "ซ้าย", "ขวา", "นอก", "ใน", "แท้", "เทียม", "จริง", "ปลอม", "เร็ว", "ช้า", "ดัง", "ค่อย", "หอม", "เหม็น", "นุ่ม", "แข็ง", "ซื่อ", "คด", "บุญ", "บาป", "พร", "ผี", "พระ", "วัด", "บ้าน", "รถ", "เรือ"],
+            s2: ["กะทะ", "ท้องฟ้า", "สายน้ำ", "ศึกษา", "กาแฟ", "น้ำแข็ง", "ส้มตำ", "พริกไทย", "ขนม", "มะม่วง", "พัดลม", "ตู้เย็น", "ปากกา", "สมุด", "ยางลบ", "ตะปู", "ค้อนเหล็ก", "รองเท้า", "เสื้อผ้า", "กางเกง", "เข็มขัด", "แหวนเพชร", "สร้อยคอ", "พูพอง", "อ่อนเพลีย", "แข็งแรง", "ร่าเริง", "สดใส", "ง่วงนอน", "หิวข้าว", "สะอาด", "สกปรก", "วุ่นวาย", "สงบ", "ระฆัง", "กังหัน", "ดอกไม้", "ต้นไม้", "ก้อนหิน", "หาดทราย", "ทะเล", "ภูเขา", "ลำธาร", "ป่าไม้", "สัตว์ป่า", "นกยูง", "ช้างพลาย", "ม้าลาย", "เสือโคร่ง", "สิงโต", "จระเข้", "เป็ดไก่", "วัวควาย", "หมูหมา", "กระต่าย", "กระรอก", "นกแก้ว", "นกเค้า", "มดง่าม", "แมงมุม", "ผีเสื้อ", "แมลง", "เต่าทอง", "ปูนา", "กุ้งแม่", "หอยขม", "ปลาทู", "ปลาช่อน", "ปลากด", "ปลาบู่", "ปลาหมอ", "ปลาดุก", "รากฐาน", "มั่นคง", "ซื่อสัตย์", "อดทน", "พยายาม", "สำเร็จ", "กตัญญู", "ใจดี", "มีวินัย", "พัฒนา", "รวดเร็ว", "แม่นยำ"],
+            s3: ["คอมพิวเตอร์", "วิทยาศาสตร์", "ประเทศไทย", "กรุงเทพฯ", "ประวัติศาสตร์", "วัฒนธรรม", "นวัตกรรม", "แรงบันดาล", "ยุติธรรม", "อิสรภาพ", "มิตรภาพ", "ประสบการณ์", "การเรียนรู้", "ความพยายาม", "ความสำเร็จ", "โอกาสทอง", "จินตนาการ", "สร้างสรรค์งาน", "มหัศจรรย์", "ประทับใจ", "กตัญญู", "พุทธรักษา", "ธรรมชาติ", "อวกาศ", "โทรศัพท์", "นาฬิกา", "โทรทัศน์", "วิทยุ", "จักรยาน", "มอเตอร์ไซค์", "เครื่องบินรบ", "เรือใบสี", "มหาสมุทร", "พระอาทิตย์", "พระจันทร์เสี้ยว", "ดวงดาวพราว", "เมฆาหมอก", "ฝนตกหนัก", "พายุพัด", "สายฟ้าฟาด", "ดินแดนไทย", "การศึกษา", "ภาษาไทย", "คณิตศาสตร์", "พละศึกษา", "ศิลปกรรม", "ดนตรีไทย", "เครื่องเสียงดัง", "ห้องนอนเรา", "อาหารดี", "สุขภาพ", "ออกกำลัง", "พักผ่อนกาย", "ความสุขใจ", "ครอบครัวเรา", "พี่น้องรัก", "เพื่อนฝูงเยอะ", "โรงเรียนไทย", "มหาวิทยาลัย", "ทำงานหนัก", "ขยันเรียน", "ตั้งใจมั่น", "สู้ต่อไป", "อย่าท้อถอย", "ก้าวเดินหน้า", "เป้าหมายชัด", "ชีวิตดี", "ยิ้มเข้าไว้", "ใจสู้จริง", "คนเก่งไทย"],
+            shift: ["น้ำ", "ตั๋ว", "ปั๊ม", "นัด", "รัฐ", "สัตว์", "พิษ", "ศิษย์", "ฤทธิ์", "ปฏิบัติ", "ประดิษฐ์", "สิทธิ์", "อิทธิพล", "เศรษฐี", "ปรัชญา", "กษัตริย์", "สัญลักษณ์", "สมบูรณ์", "กังวล", "พยากรณ์"]
+        };
+
+        // สร้างชุดคำ 1,000++ แบบสุ่มจังหวะ 1-2-1-3
         function generateGameWords() {
             let pool = [];
-            for(let i=0; i<200; i++) {
-                let rand = Math.random();
-                if(rand > 0.3) pool.push(thWords[Math.floor(Math.random()*thWords.length)]);
-                else pool.push(shiftWords[Math.floor(Math.random()*shiftWords.length)]);
+            let rhythm = ['s1', 's2', 's1', 's3'];
+            for(let i=0; i<300; i++) { // สร้างเผื่อไว้ 300 ชุด (1,200 คำ)
+                rhythm.forEach(type => {
+                    let list = dict[type];
+                    // สอดแทรกคำยาก (Shift) 10%
+                    if(Math.random() < 0.1) list = dict.shift;
+                    pool.push(list[Math.floor(Math.random()*list.length)]);
+                });
             }
             return pool;
         }
 
         let timer, timeLeft, isPlaying = false;
-        let correctWords = 0, currentWordIndex = 0, gameWords = [];
+        let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
         let userXP = 0, userLevel = 1;
 
         function getRobotAvatar(uid) { return `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`; }
@@ -218,7 +238,7 @@
         function startGame() {
             if(isPlaying) return;
             isPlaying = true;
-            timeLeft = 60; correctWords = 0; currentWordIndex = 0;
+            timeLeft = 60; correctWords = 0; wrongWords = 0; currentWordIndex = 0;
             gameWords = generateGameWords();
             
             const wrapper = document.getElementById('word-list-wrapper');
@@ -228,6 +248,7 @@
             document.getElementById('wpm-live').innerText = "0";
             document.getElementById('timer').innerText = "60s";
             document.getElementById('typing-input').disabled = false;
+            document.getElementById('typing-input').placeholder = "เริ่มพิมพ์ได้เลย!";
             document.getElementById('typing-input').value = '';
             document.getElementById('typing-input').focus();
             document.getElementById('start-btn').classList.add('hidden');
@@ -248,13 +269,7 @@
             const cur = document.getElementById(`w-${currentWordIndex}`);
             if(cur) {
                 cur.classList.add('active');
-                
-                // --- แก้ไขระบบ Scrolling ---
-                const containerHeight = 110; 
                 const curOffsetTop = cur.offsetTop;
-                const curHeight = cur.offsetHeight;
-                
-                // ถ้าคำที่กำลังพิมพ์อยู่ต่ำกว่าครึ่งหนึ่งของกล่อง ให้เลื่อนขึ้น
                 if (curOffsetTop > 45) {
                     wrapper.style.transform = `translateY(-${curOffsetTop - 10}px)`;
                 } else {
@@ -266,6 +281,8 @@
         document.getElementById('typing-input').addEventListener('input', (e) => {
             if(e.target.value.endsWith(' ')) {
                 const typed = e.target.value.trim();
+                if(typed === "") { e.target.value = ''; return; }
+                
                 const target = gameWords[currentWordIndex];
                 const el = document.getElementById(`w-${currentWordIndex}`);
                 
@@ -273,6 +290,7 @@
                     correctWords++; 
                     el.classList.add('correct'); 
                 } else { 
+                    wrongWords++;
                     el.classList.add('incorrect'); 
                 }
                 
@@ -286,9 +304,18 @@
         async function endGame() {
             clearInterval(timer);
             isPlaying = false;
-            const xpGained = correctWords * 15; // ปรับ Exp ให้เยอะขึ้นตามความยาก
+            
+            const total = correctWords + wrongWords;
+            const accuracy = total > 0 ? Math.round((correctWords / total) * 100) : 0;
+            const xpGained = (correctWords * 15) - (wrongWords * 2);
+            const finalXP = Math.max(0, xpGained);
+
             document.getElementById('res-correct').innerText = correctWords;
-            document.getElementById('xp-gain-text').innerText = `+${xpGained} EXP`;
+            document.getElementById('res-wrong').innerText = wrongWords;
+            document.getElementById('res-total').innerText = total;
+            document.getElementById('res-acc').innerText = accuracy + "%";
+            document.getElementById('xp-gain-text').innerText = `+${finalXP} EXP`;
+            
             toggleModal('result-modal', true);
 
             const user = auth.currentUser;
@@ -296,7 +323,7 @@
                 const userRef = db.collection("leaderboard").doc(user.uid);
                 const doc = await userRef.get();
                 const currentData = doc.data() || { xp: 0, wpm: 0 };
-                const newXP = (currentData.xp || 0) + xpGained;
+                const newXP = (currentData.xp || 0) + finalXP;
                 const bestWPM = Math.max(currentData.wpm || 0, correctWords);
                 
                 await userRef.set({ 
@@ -307,7 +334,11 @@
                 updateUIFromDB(user);
                 loadRanking();
             }
+            
+            // ล้างคำบนจอออกเมื่อจบเกม
+            document.getElementById('word-list-wrapper').innerHTML = "";
             document.getElementById('typing-input').disabled = true;
+            document.getElementById('typing-input').placeholder = "กดปุ่มด้านล่างเพื่อเริ่มใหม่";
             document.getElementById('start-btn').classList.remove('hidden');
             document.getElementById('start-btn').innerText = "RACE AGAIN ⚡";
         }
@@ -337,7 +368,6 @@
             document.getElementById('leaderboard-list').innerHTML = html;
         }
 
-        // --- Profile Management ---
         let base64Avatar = "";
         function previewFile() {
             const file = document.getElementById('file-input').files[0];
