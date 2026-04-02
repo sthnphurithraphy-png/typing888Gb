@@ -39,11 +39,9 @@
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
         }
 
-        /* Profile Bar */
         .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: rgba(0,0,0,0.2); padding: 12px 20px; border-radius: 20px; }
         .user-avatar { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; border: 2px solid var(--primary); background: var(--input-bg); }
 
-        /* Typing Area */
         .word-display-container { 
             font-size: 28px; 
             padding: 15px 25px; 
@@ -75,13 +73,11 @@
         }
         #typing-input:focus { border-color: var(--primary); box-shadow: 0 0 20px rgba(45, 212, 191, 0.1); }
 
-        /* Buttons */
         button { border: none; padding: 14px 28px; border-radius: 14px; cursor: pointer; font-weight: 700; transition: 0.2s; font-family: 'Kanit'; }
         .btn-primary { background: var(--primary); color: var(--bg); width: 100%; margin-top: 15px; }
         .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
         .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid #334155; }
         
-        /* Modal & Result Styles */
         .modal { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
         .modal-content { background: var(--card-bg); padding: 35px; border-radius: 32px; width: 100%; max-width: 450px; text-align: center; border: 1px solid var(--primary); }
         .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
@@ -92,8 +88,7 @@
         .hidden { display: none !important; }
         .std-input { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #334155; border-radius: 10px; color: white; margin-bottom: 15px; box-sizing: border-box; }
         
-        /* Leaderboard */
-        #leaderboard-list { margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; max-height: 150px; overflow-y: auto; }
+        #leaderboard-list { margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; max-height: 250px; overflow-y: auto; }
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .rank-avatar { width: 30px; height: 30px; border-radius: 5px; object-fit: cover; background: #000; }
     </style>
@@ -142,7 +137,7 @@
             <button id="start-btn" class="btn-primary" onclick="startGame()">START RACE</button>
 
             <div style="margin-top: 25px;">
-                <h4 style="font-size: 12px; color: var(--text-dim);">🏆 LEADERBOARD (Top 10)</h4>
+                <h4 style="font-size: 12px; color: var(--text-dim);">🏆 LEADERBOARD (Top 100)</h4>
                 <div id="leaderboard-list"></div>
             </div>
         </div>
@@ -195,7 +190,6 @@
 
         function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
 
-        // ฟังก์ชันสร้างรูป Robot ตาม UID (ใช้เมื่อยังไม่มีรูป)
         function getRobotAvatar(uid) {
             return `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`;
         }
@@ -270,7 +264,6 @@
             document.getElementById('res-total').innerText = total;
             document.getElementById('res-acc').innerText = acc + "%";
             
-            // ล้างหน้าจอคำศัพท์ทันทีที่จบเกม
             document.getElementById('word-list-wrapper').innerHTML = `<div style="width:100%; text-align:center; color:var(--text-dim); margin-top:15px; font-size: 20px;">สรุปผลการแข่ง...</div>`;
             
             document.getElementById('typing-input').disabled = true;
@@ -296,7 +289,6 @@
 
         function closeResult() {
             toggleModal('result-modal', false);
-            // พร้อมเริ่มใหม่ หน้าจอจะแสดง "กดปุ่มด้านล่างเพื่อเริ่ม"
             document.getElementById('word-list-wrapper').innerHTML = `<div style="width:100%; text-align:center; color:var(--text-dim); margin-top:15px; font-size: 20px;">กดปุ่มด้านล่างเพื่อเริ่มการแข่ง</div>`;
         }
 
@@ -327,9 +319,17 @@
         async function updateUIFromDB(user) {
             const doc = await db.collection("leaderboard").doc(user.uid).get();
             const data = doc.data() || {};
-            const finalName = data.name || user.email.split('@')[0];
             
-            // ถ้าไม่มีรูปใน DB ให้ใช้ Robot Avatar
+            let finalName = data.name;
+            if(!finalName) {
+                const rawName = user.email.split('@')[0];
+                try {
+                    finalName = decodeURIComponent(rawName);
+                } catch(e) {
+                    finalName = rawName;
+                }
+            }
+            
             const finalPhoto = data.photo || getRobotAvatar(user.uid);
             
             document.getElementById('display-name').innerText = finalName;
@@ -338,33 +338,49 @@
             document.getElementById('edit-name').value = finalName;
         }
 
+        // --- แก้ไขจุดแสดงลำดับ และจำนวน Leaderboard เป็น 100 ---
         async function loadRanking() {
-            const snap = await db.collection("leaderboard").orderBy("wpm", "desc").limit(10).get();
+            const snap = await db.collection("leaderboard").orderBy("wpm", "desc").limit(100).get();
             let html = '';
-            snap.forEach((doc, i) => {
+            let index = 1;
+            snap.forEach((doc) => {
                 const d = doc.data();
-                if(!d.wpm) return;
-                // ใน Leaderboard ถ้าไม่มีรูปก็ใช้ Robot เช่นกัน
+                if(d.wpm === undefined || d.wpm === null) return;
                 const img = d.photo || getRobotAvatar(doc.id);
                 html += `<div class="rank-item">
                     <div style="display:flex; align-items:center; gap:10px">
-                        <small>${i+1}</small>
+                        <small>${index}</small>
                         <img src="${img}" class="rank-avatar">
-                        <span>${d.name}</span>
+                        <span>${d.name || 'Unknown'}</span>
                     </div>
                     <strong style="color:var(--primary)">${d.wpm} WPM</strong>
                 </div>`;
+                index++;
             });
             document.getElementById('leaderboard-list').innerHTML = html;
         }
 
-        function handleAuth(type) {
-            const user = document.getElementById('login-user').value.trim();
+        async function handleAuth(type) {
+            const userInput = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
-            if(!user || pass.length < 6) return alert("กรุณากรอกข้อมูลให้ครบ (รหัส 6 ตัวขึ้นไป)");
-            const email = encodeURIComponent(user) + "@typing.com";
-            if(type === 'up') auth.createUserWithEmailAndPassword(email, pass).catch(e => alert("มีชื่อผู้ใช้นี้แล้ว"));
-            else auth.signInWithEmailAndPassword(email, pass).catch(e => alert("ชื่อผู้ใช้หรือรหัสผ่านผิด"));
+            if(!userInput || pass.length < 6) return alert("กรุณากรอกข้อมูลให้ครบ (รหัส 6 ตัวขึ้นไป)");
+            
+            const email = encodeURIComponent(userInput) + "@typing.com";
+            
+            try {
+                if(type === 'up') {
+                    const res = await auth.createUserWithEmailAndPassword(email, pass);
+                    await db.collection("leaderboard").doc(res.user.uid).set({
+                        name: userInput,
+                        wpm: 0,
+                        photo: getRobotAvatar(res.user.uid)
+                    }, { merge: true });
+                } else {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                }
+            } catch(e) {
+                alert(type === 'up' ? "มีชื่อผู้ใช้นี้แล้ว" : "ชื่อผู้ใช้หรือรหัสผ่านผิด");
+            }
         }
 
         auth.onAuthStateChanged(user => {
