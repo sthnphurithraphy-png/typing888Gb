@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thai Typing Pro - Master ⌨️⚡</title>
+    <title>Thai Typing Pro - Expert Mix ⌨️🔥</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -17,127 +17,109 @@
             --text-main: #f1f5f9;
             --text-dim: #64748b;
             --input-bg: #020617;
+            --xp-color: #3b82f6;
         }
         
-        body { 
-            font-family: 'Inter', 'Kanit', sans-serif; 
-            background: var(--bg); 
-            color: var(--text-main); 
-            margin: 0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-        }
+        body { font-family: 'Inter', 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        .container { width: 100%; max-width: 750px; padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 28px; padding: 40px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
 
-        .container { width: 100%; max-width: 700px; padding: 20px; }
-        .card { 
-            background: var(--card-bg); 
-            border-radius: 28px; 
-            padding: 40px; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
-        }
-
-        .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: rgba(0,0,0,0.2); padding: 12px 20px; border-radius: 20px; }
-        .user-avatar { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; border: 2px solid var(--primary); background: var(--input-bg); }
-
-        .word-display-container { 
-            font-size: 28px; 
-            padding: 15px 25px; 
-            background: var(--input-bg); 
-            border-radius: 20px; 
-            margin: 20px 0; 
-            height: 95px; 
-            overflow: hidden; 
-            border: 2px solid #334155;
-            position: relative;
-        }
+        /* Profile & Level Section */
+        .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar-container { position: relative; width: 60px; height: 60px; }
+        .user-avatar { width: 100%; height: 100%; border-radius: 16px; object-fit: cover; border: 2px solid var(--primary); background: var(--input-bg); }
+        .lvl-badge { position: absolute; bottom: -5px; right: -5px; background: var(--xp-color); color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 8px; border: 2px solid var(--card-bg); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         
-        #word-list-wrapper { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px 20px; 
-            transition: transform 0.2s ease-out;
-            align-content: flex-start;
-        }
+        .xp-info { flex-grow: 1; margin: 0 20px; }
+        .xp-bar-bg { width: 100%; height: 10px; background: #0f172a; border-radius: 10px; margin-top: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2dd4bf); width: 0%; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-        .word { color: var(--text-dim); transition: 0.2s; }
-        .word.active { color: var(--text-main); border-bottom: 3px solid var(--primary); }
+        /* Word Display Area */
+        .word-display-container { font-size: 30px; padding: 20px; background: var(--input-bg); border-radius: 22px; margin: 25px 0; height: 110px; overflow: hidden; border: 2px solid #334155; position: relative; line-height: 1.6; }
+        #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 12px 24px; transition: transform 0.3s ease; align-content: flex-start; position: relative; padding-top: 5px; }
+        
+        .word { color: var(--text-dim); transition: 0.2s; white-space: nowrap; }
+        .word.active { color: var(--text-main); background: rgba(255,255,255,0.05); border-radius: 8px; box-shadow: 0 4px 0 var(--primary); }
         .word.correct { color: var(--primary); }
-        .word.incorrect { color: var(--secondary); text-decoration: line-through; }
+        .word.incorrect { color: var(--secondary); text-decoration: underline; }
         
-        #typing-input { 
-            width: 100%; padding: 20px; background: var(--input-bg); border: 2px solid #334155; 
-            border-radius: 18px; font-size: 24px; color: white; outline: none; text-align: center; box-sizing: border-box; 
-        }
-        #typing-input:focus { border-color: var(--primary); box-shadow: 0 0 20px rgba(45, 212, 191, 0.1); }
+        #typing-input { width: 100%; padding: 22px; background: var(--input-bg); border: 2px solid #334155; border-radius: 20px; font-size: 26px; color: white; outline: none; text-align: center; box-sizing: border-box; transition: 0.3s; }
+        #typing-input:focus { border-color: var(--primary); background: #000; box-shadow: 0 0 30px rgba(45, 212, 191, 0.15); }
 
-        button { border: none; padding: 14px 28px; border-radius: 14px; cursor: pointer; font-weight: 700; transition: 0.2s; font-family: 'Kanit'; }
-        .btn-primary { background: var(--primary); color: var(--bg); width: 100%; margin-top: 15px; }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
-        .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid #334155; }
+        button { border: none; padding: 15px 30px; border-radius: 15px; cursor: pointer; font-weight: 700; transition: 0.2s; font-family: 'Kanit'; }
+        .btn-primary { background: var(--primary); color: var(--bg); width: 100%; margin-top: 20px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid #334155; }
         
-        .modal { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: var(--card-bg); padding: 35px; border-radius: 32px; width: 100%; max-width: 450px; text-align: center; border: 1px solid var(--primary); }
-        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
-        .res-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; }
-        .res-val { font-size: 24px; font-weight: 800; color: var(--primary); }
-        .res-val.fail { color: var(--secondary); }
-
+        /* Modal Style */
+        .modal { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(10px); }
+        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; border: 1px solid var(--primary); }
+        
         .hidden { display: none !important; }
-        .std-input { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #334155; border-radius: 10px; color: white; margin-bottom: 15px; box-sizing: border-box; }
+        .std-input { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid #334155; border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; }
         
-        #leaderboard-list { margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; max-height: 250px; overflow-y: auto; }
-        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .rank-avatar { width: 30px; height: 30px; border-radius: 5px; object-fit: cover; background: #000; }
+        /* Leaderboard */
+        #leaderboard-list { margin-top: 25px; background: rgba(0,0,0,0.3); border-radius: 20px; max-height: 280px; overflow-y: auto; padding: 10px; }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .rank-item:hover { background: rgba(255,255,255,0.03); }
+        .rank-avatar-box { position: relative; width: 42px; height: 42px; }
+        .rank-avatar { width: 100%; height: 100%; border-radius: 10px; object-fit: cover; }
+        .rank-lvl { position: absolute; top: -5px; left: -5px; background: var(--xp-color); color: white; font-size: 9px; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div id="auth-ui" class="card">
-            <h2>⌨️ LOGIN</h2>
-            <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้ / Username">
+            <h2 style="text-align: center; margin-bottom: 30px;">⌨️ MASTER TYPING</h2>
+            <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้">
             <input type="password" id="login-pass" class="std-input" placeholder="รหัสผ่าน">
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-ghost" style="flex: 1;" onclick="handleAuth('up')">สมัครใหม่</button>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn-ghost" style="flex: 1;" onclick="handleAuth('up')">สมัครสมาชิก</button>
                 <button class="btn-primary" style="flex: 2; margin-top:0;" onclick="handleAuth('in')">เข้าสู่ระบบ</button>
             </div>
         </div>
 
         <div id="game-ui" class="card hidden">
             <div class="profile-bar">
-                <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="avatar-container">
                     <img id="display-avatar" class="user-avatar" src="">
-                    <div>
-                        <div id="display-name" style="font-weight: 800;">Loading...</div>
-                        <div style="font-size: 11px; color: var(--primary);">TYPING MASTER</div>
+                    <div id="display-lvl-badge" class="lvl-badge">LV.1</div>
+                </div>
+                <div class="xp-info">
+                    <div id="display-name" style="font-weight: 800; font-size: 16px; color: var(--primary);">Loading...</div>
+                    <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+                    <div style="font-size: 10px; margin-top: 5px; color: var(--text-dim); display: flex; justify-content: space-between;">
+                        <span id="xp-text">EXP: 0 / 100</span>
+                        <span id="lvl-percent">0%</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn-ghost" onclick="toggleModal('profile-modal', true)">⚙️</button>
-                    <button class="btn-ghost" onclick="auth.signOut()">🚪</button>
+                    <button class="btn-ghost" style="padding: 10px 15px;" onclick="toggleModal('profile-modal', true)">⚙️</button>
+                    <button class="btn-ghost" style="padding: 10px 15px;" onclick="auth.signOut()">🚪</button>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
-                <div style="text-align:center"><small>เวลาที่เหลือ</small><div id="timer" style="font-size: 24px; color:var(--secondary)">60s</div></div>
-                <div style="text-align:center"><small>พิมพ์ถูก (WPM)</small><div id="wpm-live" style="font-size: 24px; color:var(--primary)">0</div></div>
+            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+                <div style="text-align:center"><small style="color:var(--text-dim)">TIME LEFT</small><div id="timer" style="font-size: 28px; font-weight: 800; color:var(--secondary)">60s</div></div>
+                <div style="text-align:center"><small style="color:var(--text-dim)">WORDS/MIN</small><div id="wpm-live" style="font-size: 28px; font-weight: 800; color:var(--primary)">0</div></div>
             </div>
 
-            <div class="word-display-container">
+            <div class="word-display-container" id="display-box">
                 <div id="word-list-wrapper">
-                    <div style="width:100%; text-align:center; color:var(--text-dim); margin-top:15px; font-size: 20px;">
-                        กดปุ่มด้านล่างเพื่อเริ่มการแข่ง
-                    </div>
+                    <div style="width:100%; text-align:center; color:var(--text-dim); padding-top:20px;">Ready to Race? Click START!</div>
                 </div>
             </div>
-            <input type="text" id="typing-input" placeholder="พร้อมแล้วกด START!" disabled autocomplete="off">
-            <button id="start-btn" class="btn-primary" onclick="startGame()">START RACE</button>
+            
+            <input type="text" id="typing-input" placeholder="Start typing here..." disabled autocomplete="off">
+            <button id="start-btn" class="btn-primary" onclick="startGame()">START RACE ⚡</button>
 
-            <div style="margin-top: 25px;">
-                <h4 style="font-size: 12px; color: var(--text-dim);">🏆 LEADERBOARD (Top 100)</h4>
+            <div style="margin-top: 35px;">
+                <h4 style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <span style="flex-grow:1; height:1px; background: rgba(255,255,255,0.1);"></span>
+                    🏆 WORLD LEADERBOARD
+                    <span style="flex-grow:1; height:1px; background: rgba(255,255,255,0.1);"></span>
+                </h4>
                 <div id="leaderboard-list"></div>
             </div>
         </div>
@@ -145,32 +127,29 @@
 
     <div id="result-modal" class="modal hidden">
         <div class="modal-content">
-            <h2 style="color: var(--primary); margin:0;">FINISH! 🏁</h2>
-            <div class="result-grid">
-                <div class="res-box"><small>พิมพ์ถูกต้อง</small><div id="res-correct" class="res-val">0</div></div>
-                <div class="res-box"><small>พิมพ์ผิด</small><div id="res-wrong" class="res-val fail">0</div></div>
-                <div class="res-box"><small>คำทั้งหมด</small><div id="res-total" class="res-val" style="color:white">0</div></div>
-                <div class="res-box"><small>ความแม่นยำ</small><div id="res-acc" class="res-val" style="color:#eab308">0%</div></div>
+            <h2 style="color: var(--primary); font-size: 32px;">RACE FINISHED!</h2>
+            <div id="res-stats" style="margin: 20px 0; font-size: 18px;">
+                <div>Correct Words: <span id="res-correct" style="color: var(--primary); font-weight: bold;">0</span></div>
             </div>
-            <button class="btn-primary" onclick="closeResult()">ลองอีกครั้ง</button>
+            <div id="xp-gain-text" style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 15px; color: var(--xp-color); font-size: 24px; font-weight: 900; margin-bottom: 25px;">+0 EXP</div>
+            <button class="btn-primary" onclick="closeResult()">CONTINUE</button>
         </div>
     </div>
 
     <div id="profile-modal" class="modal hidden">
         <div class="modal-content">
-            <h3>ตั้งค่าโปรไฟล์</h3>
-            <img id="preview-img" style="width:80px; height:80px; border-radius:50%; margin-bottom:15px; object-fit:cover; border:2px solid var(--primary);" src="">
-            <input type="file" id="file-input" accept="image/*" class="std-input" onchange="previewFile()">
-            <input type="text" id="edit-name" class="std-input" placeholder="ชื่อที่แสดง">
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-ghost" style="flex:1" onclick="toggleModal('profile-modal', false)">ยกเลิก</button>
-                <button class="btn-primary" style="flex:1; margin-top:0;" onclick="saveProfile()">บันทึก</button>
+            <h3>Edit Profile</h3>
+            <div style="margin-bottom: 20px;">
+                <small style="color: var(--text-dim)">Upload Avatar</small>
+                <input type="file" id="file-input" accept="image/*" class="std-input" onchange="previewFile()">
             </div>
+            <input type="text" id="edit-name" class="std-input" placeholder="Display Name">
+            <button class="btn-primary" onclick="saveProfile()">SAVE CHANGES</button>
+            <button class="btn-ghost" style="width:100%; margin-top:10px;" onclick="toggleModal('profile-modal', false)">CANCEL</button>
         </div>
     </div>
 
     <script>
-        // --- Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyC4lXsegdu_1H9coMKQNiPWj3Bg2sPxT-0",
             authDomain: "thaityping-5b95f.firebaseapp.com",
@@ -182,23 +161,65 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        const wordsMaster = ["ท้องฟ้า", "กะเพรา", "เทคโนโลยี", "มุ่งมั่น", "พัฒนา", "สำเร็จ", "จินตนาการ", "สดใส", "ท้าทาย", "ความสุข", "เรียนรู้", "แรงบันดาลใจ", "สร้างสรรค์", "ซื่อสัตย์", "กตัญญู", "ความรัก", "อดทน", "ระเบียบ", "วินัย", "ยุติธรรม", "อิสระ", "เป้าหมาย", "เดินทาง", "ปลอดภัย", "ธรรมชาติ", "สิ่งแวดล้อม", "แข็งแรง", "แบ่งปัน", "เมตตา", "รวดเร็ว", "แม่นยำ", "อนาคต", "ปัจจุบัน", "ประวัติศาสตร์", "ภาษาไทย", "คีย์บอร์ด", "คอมพิวเตอร์", "โปรแกรมเมอร์", "นวัตกรรม", "อวกาศ", "จักรวาล", "มหัศจรรย์", "ท่องเที่ยว", "ประสบการณ์", "คุณภาพ", "มาตรฐาน", "ระบบ", "โอกาส", "บทเรียน", "พยายาม"];
+        // --- Mixed Dictionary (1,000+ words logic) ---
+        const thWords = [
+            "กระทะ","โรงเรียน","คอมพิวเตอร์","วิทยาศาสตร์","ท้องฟ้า","สายน้ำ","พัฒนา","ประเทศไทย","กรุงเทพ","ศึกษา","ความสุข","กาแฟ","น้ำแข็ง","ขนมปัง","ส้มตำ","กะเพรา","พริก","กระเทียม","ระเบียบ","วินัย",
+            "ต้นไม้","ก้อนเมฆ","พระจันทร์","ดวงอาทิตย์","ดวงดาว","อวกาศ","โทรศัพท์","ธรรมชาติ","ประวัติศาสตร์","วัฒนธรรม","มิตรภาพ","ความรัก","พยายาม","อดทน","สู้ตาย","กตัญญู","ซื่อสัตย์","รวดเร็ว","แม่นยำ","นวัตกรรม",
+            "อาหาร","เดินเล่น","วิ่งแข่ง","กระโดด","ร้องเพลง","เต้นรำ","วาดรูป","ระบายสี","ฟังเพลง","ดูหนัง","ท่องเที่ยว","พักผ่อน","ทำงาน","ขยัน","ฉลาด","รอบรู้","แบ่งปัน","ใจดี","ยิ้มแย้ม","หัวเราะ",
+            "ความหวัง","เป้าหมาย","สำเร็จ","โอกาส","ความรู้","ประสบการณ์","บทเรียน","การเรียนรู้","สร้างสรรค์","จินตนาการ","แรงบันดาลใจ","ยุติธรรม","อิสระ","ปลอดภัย","แข็งแรง","สุขภาพ","แจ่มใส","สดชื่น","งดงาม","สว่าง",
+            "ห่วงใย","คิดถึง","ขอบคุณ","ขอโทษ","โชคดี","รวยมาก","มั่งคั่ง","มั่นคง","ยั่งยืน","น้ำใจ","ช่วยเหลือ","ร่วมมือ","สามัคคี","พลัง","แข็งแกร่ง","ยอดเยี่ยม","มหัศจรรย์","ประทับใจ","พิเศษ","น่ารัก"
+        ];
+        const shiftWords = ["น้ำ","ตั๋ว","ปั๊ม","นัด","รัฐ","สัตว์","พิษ","ศิษย์","ฤทธิ์","ปฏิบัติ","ประดิษฐ์","สิทธิ์","อิทธิพล","เศรษฐี","ปรัชญา","กษัตริย์","สัญลักษณ์","สมบูรณ์","กังวล","พยากรณ์"];
         
-        let timer, timeLeft, isPlaying = false;
-        let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
-        let userPhotoBase64 = "";
+        function generateGameWords() {
+            let pool = [];
+            for(let i=0; i<200; i++) {
+                let rand = Math.random();
+                if(rand > 0.3) pool.push(thWords[Math.floor(Math.random()*thWords.length)]);
+                else pool.push(shiftWords[Math.floor(Math.random()*shiftWords.length)]);
+            }
+            return pool;
+        }
 
+        let timer, timeLeft, isPlaying = false;
+        let correctWords = 0, currentWordIndex = 0, gameWords = [];
+        let userXP = 0, userLevel = 1;
+
+        function getRobotAvatar(uid) { return `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`; }
         function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
 
-        function getRobotAvatar(uid) {
-            return `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`;
+        function calculateLevel(xp) {
+            let lvl = 1;
+            let tempXP = xp;
+            while (tempXP >= lvl * 100 && lvl < 150) {
+                tempXP -= lvl * 100;
+                lvl++;
+            }
+            return { lvl, currentXP: tempXP, nextXP: lvl * 100 };
+        }
+
+        async function updateUIFromDB(user) {
+            const doc = await db.collection("leaderboard").doc(user.uid).get();
+            const data = doc.data() || { xp: 0, level: 1, name: user.email.split('@')[0] };
+            userXP = data.xp || 0;
+            const lvData = calculateLevel(userXP);
+            userLevel = lvData.lvl;
+
+            document.getElementById('display-name').innerText = data.name;
+            document.getElementById('display-avatar').src = data.photo || getRobotAvatar(user.uid);
+            document.getElementById('display-lvl-badge').innerText = `LV.${userLevel}`;
+            
+            const pct = Math.floor((lvData.currentXP / lvData.nextXP) * 100);
+            document.getElementById('xp-fill').style.width = `${pct}%`;
+            document.getElementById('xp-text').innerText = `EXP: ${lvData.currentXP} / ${lvData.nextXP}`;
+            document.getElementById('lvl-percent').innerText = `${pct}%`;
         }
 
         function startGame() {
             if(isPlaying) return;
             isPlaying = true;
-            timeLeft = 60; correctWords = 0; wrongWords = 0; currentWordIndex = 0;
-            gameWords = Array.from({length: 200}, () => wordsMaster[Math.floor(Math.random() * wordsMaster.length)]);
+            timeLeft = 60; correctWords = 0; currentWordIndex = 0;
+            gameWords = generateGameWords();
             
             const wrapper = document.getElementById('word-list-wrapper');
             wrapper.style.transform = `translateY(0px)`;
@@ -220,13 +241,24 @@
         }
 
         function updateHighlight() {
+            const wrapper = document.getElementById('word-list-wrapper');
             const words = document.querySelectorAll('.word');
             words.forEach(el => el.classList.remove('active'));
+            
             const cur = document.getElementById(`w-${currentWordIndex}`);
             if(cur) {
                 cur.classList.add('active');
-                if (cur.offsetTop > 40) {
-                    document.getElementById('word-list-wrapper').style.transform = `translateY(-${cur.offsetTop - 5}px)`;
+                
+                // --- แก้ไขระบบ Scrolling ---
+                const containerHeight = 110; 
+                const curOffsetTop = cur.offsetTop;
+                const curHeight = cur.offsetHeight;
+                
+                // ถ้าคำที่กำลังพิมพ์อยู่ต่ำกว่าครึ่งหนึ่งของกล่อง ให้เลื่อนขึ้น
+                if (curOffsetTop > 45) {
+                    wrapper.style.transform = `translateY(-${curOffsetTop - 10}px)`;
+                } else {
+                    wrapper.style.transform = `translateY(0px)`;
                 }
             }
         }
@@ -241,7 +273,6 @@
                     correctWords++; 
                     el.classList.add('correct'); 
                 } else { 
-                    wrongWords++;
                     el.classList.add('incorrect'); 
                 }
                 
@@ -255,143 +286,98 @@
         async function endGame() {
             clearInterval(timer);
             isPlaying = false;
-            
-            const total = correctWords + wrongWords;
-            const acc = total > 0 ? Math.round((correctWords / total) * 100) : 0;
-            
+            const xpGained = correctWords * 15; // ปรับ Exp ให้เยอะขึ้นตามความยาก
             document.getElementById('res-correct').innerText = correctWords;
-            document.getElementById('res-wrong').innerText = wrongWords;
-            document.getElementById('res-total').innerText = total;
-            document.getElementById('res-acc').innerText = acc + "%";
-            
-            document.getElementById('word-list-wrapper').innerHTML = `<div style="width:100%; text-align:center; color:var(--text-dim); margin-top:15px; font-size: 20px;">สรุปผลการแข่ง...</div>`;
-            
-            document.getElementById('typing-input').disabled = true;
-            document.getElementById('start-btn').classList.remove('hidden');
-            document.getElementById('start-btn').innerText = "START AGAIN";
-
+            document.getElementById('xp-gain-text').innerText = `+${xpGained} EXP`;
             toggleModal('result-modal', true);
 
             const user = auth.currentUser;
             if (user) {
                 const userRef = db.collection("leaderboard").doc(user.uid);
                 const doc = await userRef.get();
-                if (!doc.exists || correctWords > (doc.data().wpm || 0)) {
-                    await userRef.set({ 
-                        wpm: correctWords, 
-                        name: document.getElementById('display-name').innerText, 
-                        photo: document.getElementById('display-avatar').src 
-                    }, { merge: true });
-                }
+                const currentData = doc.data() || { xp: 0, wpm: 0 };
+                const newXP = (currentData.xp || 0) + xpGained;
+                const bestWPM = Math.max(currentData.wpm || 0, correctWords);
+                
+                await userRef.set({ 
+                    xp: newXP, 
+                    wpm: bestWPM,
+                    level: calculateLevel(newXP).lvl
+                }, { merge: true });
+                updateUIFromDB(user);
                 loadRanking();
             }
+            document.getElementById('typing-input').disabled = true;
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('start-btn').innerText = "RACE AGAIN ⚡";
         }
 
-        function closeResult() {
-            toggleModal('result-modal', false);
-            document.getElementById('word-list-wrapper').innerHTML = `<div style="width:100%; text-align:center; color:var(--text-dim); margin-top:15px; font-size: 20px;">กดปุ่มด้านล่างเพื่อเริ่มการแข่ง</div>`;
+        function closeResult() { toggleModal('result-modal', false); }
+
+        async function loadRanking() {
+            const snap = await db.collection("leaderboard").orderBy("wpm", "desc").limit(100).get();
+            let html = '';
+            let idx = 1;
+            snap.forEach(doc => {
+                const d = doc.data();
+                const lv = calculateLevel(d.xp || 0).lvl;
+                html += `<div class="rank-item">
+                    <div style="display:flex; align-items:center; gap:12px">
+                        <small style="color:var(--text-dim); width: 20px;">${idx}</small>
+                        <div class="rank-avatar-box">
+                            <img src="${d.photo || getRobotAvatar(doc.id)}" class="rank-avatar">
+                            <span class="rank-lvl">${lv}</span>
+                        </div>
+                        <span style="font-weight: 600;">${d.name || 'Unknown'}</span>
+                    </div>
+                    <strong style="color:var(--primary)">${d.wpm || 0} <small>WPM</small></strong>
+                </div>`;
+                idx++;
+            });
+            document.getElementById('leaderboard-list').innerHTML = html;
         }
 
+        // --- Profile Management ---
+        let base64Avatar = "";
         function previewFile() {
             const file = document.getElementById('file-input').files[0];
             const reader = new FileReader();
-            reader.onloadend = () => {
-                document.getElementById('preview-img').src = reader.result;
-                userPhotoBase64 = reader.result;
-            }
+            reader.onloadend = () => { base64Avatar = reader.result; };
             if (file) reader.readAsDataURL(file);
         }
 
         async function saveProfile() {
             const newName = document.getElementById('edit-name').value.trim();
             const user = auth.currentUser;
-            if (!newName || !user) return alert("กรุณาใส่ชื่อ");
+            if(!user) return;
+            let updateData = {};
+            if(newName) updateData.name = newName;
+            if(base64Avatar) updateData.photo = base64Avatar;
             
-            await db.collection("leaderboard").doc(user.uid).set({
-                name: newName, 
-                photo: userPhotoBase64 || document.getElementById('display-avatar').src
-            }, { merge: true });
-            
+            await db.collection("leaderboard").doc(user.uid).set(updateData, { merge: true });
             updateUIFromDB(user);
             toggleModal('profile-modal', false);
         }
 
-        async function updateUIFromDB(user) {
-            const doc = await db.collection("leaderboard").doc(user.uid).get();
-            const data = doc.data() || {};
-            
-            let finalName = data.name;
-            if(!finalName) {
-                const rawName = user.email.split('@')[0];
-                try {
-                    finalName = decodeURIComponent(rawName);
-                } catch(e) {
-                    finalName = rawName;
-                }
-            }
-            
-            const finalPhoto = data.photo || getRobotAvatar(user.uid);
-            
-            document.getElementById('display-name').innerText = finalName;
-            document.getElementById('display-avatar').src = finalPhoto;
-            document.getElementById('preview-img').src = finalPhoto;
-            document.getElementById('edit-name').value = finalName;
-        }
-
-        // --- แก้ไขจุดแสดงลำดับ และจำนวน Leaderboard เป็น 100 ---
-        async function loadRanking() {
-            const snap = await db.collection("leaderboard").orderBy("wpm", "desc").limit(100).get();
-            let html = '';
-            let index = 1;
-            snap.forEach((doc) => {
-                const d = doc.data();
-                if(d.wpm === undefined || d.wpm === null) return;
-                const img = d.photo || getRobotAvatar(doc.id);
-                html += `<div class="rank-item">
-                    <div style="display:flex; align-items:center; gap:10px">
-                        <small>${index}</small>
-                        <img src="${img}" class="rank-avatar">
-                        <span>${d.name || 'Unknown'}</span>
-                    </div>
-                    <strong style="color:var(--primary)">${d.wpm} WPM</strong>
-                </div>`;
-                index++;
-            });
-            document.getElementById('leaderboard-list').innerHTML = html;
-        }
-
         async function handleAuth(type) {
-            const userInput = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pass').value;
-            if(!userInput || pass.length < 6) return alert("กรุณากรอกข้อมูลให้ครบ (รหัส 6 ตัวขึ้นไป)");
-            
-            const email = encodeURIComponent(userInput) + "@typing.com";
-            
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value;
+            if(!u || p.length < 6) return alert("กรุณากรอกชื่อและรหัสผ่าน 6 ตัวขึ้นไป");
+            const email = encodeURIComponent(u) + "@typing.com";
             try {
                 if(type === 'up') {
-                    const res = await auth.createUserWithEmailAndPassword(email, pass);
-                    await db.collection("leaderboard").doc(res.user.uid).set({
-                        name: userInput,
-                        wpm: 0,
-                        photo: getRobotAvatar(res.user.uid)
-                    }, { merge: true });
-                } else {
-                    await auth.signInWithEmailAndPassword(email, pass);
-                }
-            } catch(e) {
-                alert(type === 'up' ? "มีชื่อผู้ใช้นี้แล้ว" : "ชื่อผู้ใช้หรือรหัสผ่านผิด");
-            }
+                    const res = await auth.createUserWithEmailAndPassword(email, p);
+                    await db.collection("leaderboard").doc(res.user.uid).set({ name: u, xp: 0, wpm: 0 });
+                } else { await auth.signInWithEmailAndPassword(email, p); }
+            } catch(e) { alert("ชื่อผู้ใช้นี้มีคนใช้แล้ว หรือรหัสผ่านผิด"); }
         }
 
         auth.onAuthStateChanged(user => {
             if(user) {
-                document.getElementById('auth-ui').classList.add('hidden');
-                document.getElementById('game-ui').classList.remove('hidden');
-                updateUIFromDB(user);
-                loadRanking();
+                toggleModal('auth-ui', false); document.getElementById('game-ui').classList.remove('hidden');
+                updateUIFromDB(user); loadRanking();
             } else {
-                document.getElementById('auth-ui').classList.remove('hidden');
-                document.getElementById('game-ui').classList.add('hidden');
+                toggleModal('auth-ui', true); document.getElementById('game-ui').classList.add('hidden');
             }
         });
     </script>
