@@ -10,7 +10,6 @@
     
     <style>
         :root {
-            /* Dark Mode (Default) */
             --primary: #2dd4bf;
             --secondary: #fb7185;
             --bg: #0f172a;
@@ -23,7 +22,6 @@
             --border: rgba(255,255,255,0.1);
         }
 
-        /* Light Mode Classes */
         body.light-theme {
             --primary: #0d9488;
             --secondary: #e11d48;
@@ -41,7 +39,6 @@
         .container { width: 100%; max-width: 750px; padding: 20px; }
         .card { background: var(--card-bg); border-radius: 28px; padding: 40px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); position: relative; }
 
-        /* Theme Toggle Button */
         .theme-toggle { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 20px; background: var(--input-bg); border: 1px solid var(--border); padding: 8px; border-radius: 12px; }
 
         .mode-selector { display: flex; background: var(--input-bg); padding: 5px; border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border); }
@@ -78,7 +75,6 @@
         .modal-content { background: var(--card-bg); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; border: 1px solid var(--primary); color: var(--text-main); }
         
         .hidden { display: none !important; }
-        .invisible-text { color: transparent !important; }
         .std-input { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); margin-bottom: 15px; box-sizing: border-box; }
         
         #leaderboard-list { margin-top: 15px; background: rgba(0,0,0,0.05); border-radius: 20px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid var(--border); }
@@ -89,6 +85,11 @@
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
         .stat-box { background: rgba(0,0,0,0.05); padding: 15px; border-radius: 18px; text-align: left; border: 1px solid var(--border); }
+
+        /* ส่วนที่เพิ่มใหม่: ปุ่มปิดตา */
+        .timer-toggle-btn { cursor: pointer; font-size: 14px; opacity: 0.5; transition: 0.3s; vertical-align: middle; margin-left: 5px; }
+        .timer-toggle-btn:hover { opacity: 1; }
+        .hidden-timer { color: transparent !important; text-shadow: 0 0 8px var(--secondary); user-select: none; }
     </style>
 </head>
 <body>
@@ -133,7 +134,7 @@
 
             <div style="display: flex; justify-content: space-between; margin: 15px 0; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 20px; border: 1px solid var(--border);">
                 <div style="text-align:center; flex:1">
-                    <small style="color:var(--text-dim)">TIME</small>
+                    <small style="color:var(--text-dim)">TIME <span class="timer-toggle-btn" onclick="toggleTimerVisibility()" title="ซ่อน/แสดงเวลา">👁️</span></small>
                     <div id="timer" style="font-size: 28px; font-weight: 800; color:var(--secondary)">60s</div>
                 </div>
                 <div style="text-align:center; flex:1">
@@ -192,7 +193,7 @@
     </div>
 
     <script>
-        // Firebase Config (คงเดิมจากโค้ดของคุณ)
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyC4lXsegdu_1H9coMKQNiPWj3Bg2sPxT-0",
             authDomain: "thaityping-5b95f.firebaseapp.com",
@@ -204,9 +205,9 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
 
-        // คลังคำศัพท์ที่ปรับปรุงแล้ว
+        // คลังคำศัพท์
         const dict_1_syl = {
-            th: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป", "ดี", "ใจ", "มือ", "ตา", "หู", "น้ำ", "ไฟ", "รัก", "บ้าน", "รถ", "คน", "มด", "นก", "บน", "ล่าง", "ซ้าย", "ขวา", "เรียน", "เล่น", "ทำ", "สวย", "รวย", "จน", "ค่ะ", "ครับ", "เรา", "เธอ", "เขา", "ใน", "นอก", "ปัด", "เป่า", "แปรง", "เขียน", "อ่าน", "ฟัง", "ชาม", "แก้ว", "จาน", "ไฟ", "ดิน", "ลม", "ฝน", "ฟ้า", "ขาว", "ดำ", "แดง", "เขียว", "ทอง", "เงิน", "งาน", "พัก", "ผ่อน", "ยิ้ม", "ขำ", "หมู", "หมา", "แมว", "ม้า", "ปลา", "ปู", "งู", "ไม้", "ไก่", "ไข่", "น้า", "อา", "ป้า", "ลุง", "แม่", "พ่อ", "พี่", "น้อง", "คุณ", "ท่าน", "เนย", "นม", "กาง", "แขน", "ขา", "เอว", "ท้อง", "ฟัน", "ปาก", "จมูก", "แก้ม", "คิ้ว", "ผม", "ขน", "เล็บ", "นิ้ว", "ตัว"],
+            th: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป", "ดี", "ใจ", "มือ", "ตา", "หู", "น้ำ", "ไฟ", "รัก", "บ้าน", "รถ", "คน", "มด", "นก", "บน", "ล่าง", "ซ้าย", "ขวา", "เรียน", "เล่น", "ทำ", "สวย", "รวย", "จน", "ค่ะ", "ครับ", "เรา", "เธอ", "เขา", "ใน", "นอก", "ปัด", "เป่า", "แปรง", "เขียน", "อ่าน", "ฟัง", "ชาม", "แก้ว", "จาน", "ดิน", "ลม", "ฝน", "ฟ้า", "ขาว", "ดำ", "แดง", "เขียว", "ทอง", "เงิน", "งาน", "พัก", "ผ่อน", "ยิ้ม", "ขำ", "หมู", "หมา", "แมว", "ม้า", "ปลา", "ปู", "งู", "ไม้", "ไก่", "ไข่", "น้า", "อา", "ป้า", "ลุง", "แม่", "พ่อ", "พี่", "น้อง", "คุณ", "ท่าน", "เนย", "นม", "กาง", "แขน", "ขา", "เอว", "ท้อง", "ฟัน", "ปาก", "จมูก", "แก้ม", "คิ้ว", "ผม", "ขน", "เล็บ", "นิ้ว", "ตัว"],
             en: ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "work", "play", "love", "game", "fire", "water", "earth", "wind", "blue", "red", "green", "bird", "fish", "small", "large", "ready", "start", "code", "best", "cool", "now", "here", "there", "some", "more", "last", "next", "page", "text", "font", "size", "dark", "light", "home", "back", "show", "hide", "save", "edit", "user", "name", "pass", "file", "web", "app", "site", "link", "bold", "time", "date", "year", "day", "way", "car", "bus", "ship", "road", "sky", "moon", "star", "sun", "tree", "leaf", "root", "seed", "wall", "door", "room", "key", "box", "bag", "cup", "pen", "book", "boy", "girl", "man", "kid", "son", "old", "new", "low", "high"]
         };
 
@@ -217,28 +218,32 @@
 
         let currentMode = 'th', timer = null, timeLeft, isPlaying = false;
         let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [], userXP = 0;
+        let isTimerHidden = false; // สถานะการซ่อนเวลา
 
-        // Theme Toggle Function
-        function toggleTheme() {
-            document.body.classList.toggle('light-theme');
-            const isLight = document.body.classList.contains('light-theme');
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        // --- ส่วนจัดการเวลา (ซ่อน/แสดง) ---
+        function toggleTimerVisibility() {
+            isTimerHidden = !isTimerHidden;
+            const timerEl = document.getElementById('timer');
+            if(isTimerHidden) {
+                timerEl.classList.add('hidden-timer');
+            } else {
+                timerEl.classList.remove('hidden-timer');
+            }
         }
 
-        // Initialize Theme
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        }
+
         if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
 
         function generateMixedWords(mode) {
             let words = [];
             const oneSyl = dict_1_syl[mode];
             const twoSyl = dict_2_syl[mode];
-            
-            for(let i=0; i<100; i++) { // วน 100 รอบ จะได้ 500 คำ
-                // เพิ่ม 1 พยางค์ 4 คำ
-                for(let j=0; j<4; j++) {
-                    words.push(oneSyl[Math.floor(Math.random() * oneSyl.length)]);
-                }
-                // เพิ่ม 2 พยางค์ 1 คำ
+            for(let i=0; i<100; i++) {
+                for(let j=0; j<4; j++) words.push(oneSyl[Math.floor(Math.random() * oneSyl.length)]);
                 words.push(twoSyl[Math.floor(Math.random() * twoSyl.length)]);
             }
             return words;
@@ -370,11 +375,9 @@
             if (user) {
                 const newXP = userXP + finalXP;
                 await db.collection("users").doc(user.uid).set({ xp: newXP }, { merge: true });
-                
                 const lbRef = db.collection(`leaderboard_${currentMode}`).doc(user.uid);
                 const currentLB = await lbRef.get();
                 const bestWPM = Math.max((currentLB.data()?.wpm || 0), finalCorrect);
-                
                 await lbRef.set({ 
                     name: document.getElementById('display-name').innerText, 
                     wpm: bestWPM, 
