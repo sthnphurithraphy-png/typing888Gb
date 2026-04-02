@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Language Typing Pro ⌨️🌍</title>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3242/3242202.png">
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -294,11 +296,12 @@
             document.getElementById('stop-btn').classList.remove('hidden');
             
             if(timer) clearInterval(timer);
+            // ปรับจาก 1000 เป็น 1040 (หน่วงเพิ่ม 4% เพื่อให้นับถอยหลังช้าลง)
             timer = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').innerText = timeLeft + "s";
                 if(timeLeft <= 0) endGame();
-            }, 1000);
+            }, 1040); 
             updateHighlight();
         }
 
