@@ -26,8 +26,8 @@
         .mode-btn { flex: 1; padding: 14px; background: var(--input-bg); border: 2px solid transparent; border-radius: 18px; cursor: pointer; color: var(--text-dim); transition: 0.3s; text-align: center; font-weight: bold; }
         .mode-btn.active { border-color: var(--primary); color: white; background: rgba(45, 212, 191, 0.1); box-shadow: 0 0 15px rgba(45, 212, 191, 0.2); }
         
-        .word-display-container { font-size: 28px; padding: 25px; background: var(--input-bg); border-radius: 22px; margin-bottom: 20px; height: 100px; overflow: hidden; border: 2px solid var(--border); line-height: 1.6; }
-        #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 10px 20px; transition: 0.2s; }
+        .word-display-container { font-size: 28px; padding: 25px; background: var(--input-bg); border-radius: 22px; margin-bottom: 20px; height: 100px; overflow: hidden; border: 2px solid var(--border); line-height: 1.6; position: relative; }
+        #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 10px 20px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .word { color: var(--text-dim); transition: 0.1s; }
         .word.active { color: var(--text-main); border-bottom: 3px solid var(--primary); }
         .word.error-typing { color: var(--secondary) !important; text-shadow: 0 0 10px rgba(251, 113, 133, 0.4); }
@@ -47,12 +47,17 @@
         .rank-img { width: 35px; height: 35px; border-radius: 10px; object-fit: cover; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px); }
-        .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 420px; text-align: center; border: 1px solid var(--primary); }
+        .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 420px; text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 30px rgba(45, 212, 191, 0.2); }
         .icon-btn { cursor: pointer; background: var(--input-bg); border: 1px solid var(--border); padding: 10px; border-radius: 15px; transition: 0.3s; color: white; }
         
-        /* สไตล์พิเศษสำหรับเลนแข่ง */
         .race-lane { height: 45px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; display: flex; align-items: center; }
         .race-car { position: absolute; left: 0; transition: 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; }
+
+        /* สไตล์ป๊อปอัพสรุปผล */
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
+        .result-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px; border: 1px solid var(--border); }
+        .result-val { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .xp-earned { color: var(--xp-color); font-size: 28px; font-weight: bold; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
     </style>
 </head>
 <body>
@@ -94,14 +99,15 @@
         <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(0,0,0,0.3); padding:20px; border-radius:20px; border: 1px solid var(--primary);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span id="room-id-display" style="color:var(--primary); font-weight:bold;">ROOM: -</span>
+                <span id="race-target" style="color:var(--secondary); font-size: 14px; font-weight: bold;">เป้าหมาย: 100 คำ</span>
                 <button id="start-race-btn" class="btn-p" style="width:auto; padding:5px 20px;" onclick="triggerRaceStart()">เริ่มการแข่ง</button>
             </div>
             <div id="race-lanes"></div>
         </div>
 
         <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px;">
-            <div style="text-align:center;"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size:24px; font-weight:bold; color:var(--secondary);">60s</div></div>
-            <div style="text-align:center;"><small style="color:var(--text-dim)">WPM/WORDS</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
+            <div id="timer-box" style="text-align:center;"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size:24px; font-weight:bold; color:var(--secondary);">60s</div></div>
+            <div style="text-align:center;"><small id="stat-label" style="color:var(--text-dim)">WPM/WORDS</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
             <div style="text-align:center;"><small style="color:var(--text-dim)">WRONG</small><div id="wrong-live" style="font-size:24px; font-weight:bold; color:var(--secondary);">0</div></div>
         </div>
 
@@ -120,12 +126,25 @@
     </div>
 </div>
 
+<div id="result-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2 style="color: var(--primary); margin: 0;">🎉 จบการฝึกซ้อม!</h2>
+        <div class="xp-earned" id="res-xp">+0 XP</div>
+        <div class="result-grid">
+            <div class="result-box"><small>WPM</small><div class="result-val" id="res-wpm">0</div></div>
+            <div class="result-box"><small>ความแม่นยำ</small><div class="result-val" id="res-acc">0%</div></div>
+            <div class="result-box"><small>พิมพ์ถูก</small><div class="result-val" id="res-correct" style="color:var(--primary)">0</div></div>
+            <div class="result-box"><small>พิมพ์ผิด</small><div class="result-val" id="res-wrong" style="color:var(--secondary)">0</div></div>
+        </div>
+        <button class="btn-p" onclick="toggleModal('result-modal', false); resetGame();">ฝึกซ้อมต่อ</button>
+    </div>
+</div>
+
 <div id="race-result-modal" class="modal hidden">
     <div class="modal-content" style="width: 500px; border: 2px solid var(--primary);">
         <h1 id="race-result-header" style="color: var(--primary); margin-bottom: 5px;">YOU WIN!</h1>
         <p id="race-result-sub" style="color: var(--text-dim); margin-bottom: 20px;">สรุปผลการแข่งขัน</p>
-        <div id="race-result-list" style="text-align: left; margin-bottom: 25px;">
-            </div>
+        <div id="race-result-list" style="text-align: left; margin-bottom: 25px;"></div>
         <button class="btn-p" onclick="closeRaceResult()">กลับสู่หน้าหลัก</button>
     </div>
 </div>
@@ -146,7 +165,7 @@
 
 <div id="race-lobby-modal" class="modal hidden">
     <div class="modal-content">
-        <h3>🏎️ โหมดปะลอง (100 คำ ไทยล้วน)</h3>
+        <h3>🏎️ โหมดปะลอง (ใครครบ 100 คำก่อนชนะ)</h3>
         <button class="btn-p" onclick="createRaceRoom()" style="margin-bottom:15px;">สร้างห้องใหม่</button>
         <input type="text" id="join-room-input" class="std-input" placeholder="รหัสห้อง">
         <button class="btn-p" onclick="joinRaceRoom()" style="margin-top:10px;">เข้าร่วมห้อง</button>
@@ -214,11 +233,9 @@
     }
 
     function generateWords() {
-        const count = (currentGameType === 'race') ? 100 : 1000;
+        const count = 1000; // สุ่มมาเลย 1,000 คำตามสั่ง
         let pool = [];
-        // Force เป็นภาษาไทยถ้าเป็นโหมด Race
         const activeMode = (currentGameType === 'race') ? 'th' : currentMode;
-        
         if (activeMode === 'th') {
             for (let i = 0; i < count; i++) {
                 let mod = i % 10;
@@ -235,7 +252,17 @@
     function resetGame() {
         clearInterval(timer); isPlaying = false; timeLeft = 60;
         correctWords = 0; wrongWords = 0; currentWordIndex = 0;
-        document.getElementById('timer').innerText = "60s";
+        
+        // จัดการ UI ตามโหมด
+        if(currentGameType === 'race') {
+            document.getElementById('timer-box').classList.add('hidden');
+            document.getElementById('stat-label').innerText = "CORRECT WORDS";
+        } else {
+            document.getElementById('timer-box').classList.remove('hidden');
+            document.getElementById('stat-label').innerText = "WPM/WORDS";
+            document.getElementById('timer').innerText = "60s";
+        }
+
         document.getElementById('wpm-live').innerText = "0";
         document.getElementById('wrong-live').innerText = "0";
         document.getElementById('typing-input').value = "";
@@ -251,7 +278,12 @@
         const cur = document.getElementById(`w-${currentWordIndex}`);
         if(cur) {
             cur.classList.add('active');
-            if (cur.offsetTop > 45) document.getElementById('word-list-wrapper').style.transform = `translateY(-${cur.offsetTop - 10}px)`;
+            const wrapper = document.getElementById('word-list-wrapper');
+            if (cur.offsetTop > 45) {
+                wrapper.style.transform = `translateY(-${cur.offsetTop - 10}px)`;
+            } else {
+                wrapper.style.transform = `translateY(0px)`;
+            }
         }
     }
 
@@ -260,32 +292,53 @@
         const targetWord = gameWords[currentWordIndex];
         const wordEl = document.getElementById(`w-${currentWordIndex}`);
 
-        if(!isPlaying && val.trim().length > 0 && currentGameType === 'practice') { isPlaying = true; startTimer(); }
+        if(!isPlaying && val.trim().length > 0) { 
+            isPlaying = true; 
+            if(currentGameType !== 'race') startTimer(); // โหมดปะลองไม่ต้องนับเวลาถอยหลัง
+        }
         
         if(val.endsWith(' ')) {
             const typed = val.trim();
-            if(typed === targetWord) { correctWords++; wordEl.classList.add('correct'); }
-            else { wrongWords++; wordEl.classList.add('incorrect'); }
-            currentWordIndex++; e.target.value = '';
+            if(typed === targetWord) { 
+                correctWords++; 
+                wordEl.classList.add('correct'); 
+                
+                // เฉพาะโหมดปะลอง: อัปเดต Progress เมื่อพิมพ์ถูกเท่านั้น
+                if(currentGameType === 'race') {
+                    db.collection("rooms").doc(currentRoomId).update({ 
+                        [`players.${auth.currentUser.uid}.progress`]: correctWords, // ใช้ correctWords เป็นเกณฑ์วิ่ง
+                        [`players.${auth.currentUser.uid}.count`]: correctWords 
+                    });
+                    // ใครครบ 100 คำก่อนชนะ
+                    if(correctWords >= 100) endGame(); 
+                }
+            }
+            else { 
+                wrongWords++; 
+                wordEl.classList.add('incorrect'); 
+            }
+            
+            currentWordIndex++; 
+            e.target.value = '';
             document.getElementById('wpm-live').innerText = correctWords;
             document.getElementById('wrong-live').innerText = wrongWords;
             updateHighlight();
-            if(currentGameType === 'race') {
-                db.collection("rooms").doc(currentRoomId).update({ 
-                    [`players.${auth.currentUser.uid}.progress`]: currentWordIndex,
-                    [`players.${auth.currentUser.uid}.count`]: currentWordIndex 
-                });
-                if(currentWordIndex >= gameWords.length) endGame();
-            }
         } else {
             if (targetWord && !targetWord.startsWith(val)) wordEl.classList.add('error-typing');
             else wordEl.classList.remove('error-typing');
         }
     });
 
-    function startTimer() { timer = setInterval(() => { timeLeft--; document.getElementById('timer').innerText = timeLeft + "s"; if(timeLeft <= 0) endGame(); }, 1000); }
+    function startTimer() { 
+        timer = setInterval(() => { 
+            timeLeft--; 
+            document.getElementById('timer').innerText = timeLeft + "s"; 
+            if(timeLeft <= 0) endGame(); 
+        }, 1000); 
+    }
 
     async function endGame() {
+        if(!isPlaying) return;
         isPlaying = false; clearInterval(timer);
         document.getElementById('typing-input').disabled = true;
         const user = auth.currentUser;
@@ -293,6 +346,16 @@
         if(currentGameType === 'race') {
             await db.collection("rooms").doc(currentRoomId).update({ status: 'finished' });
         } else if(user) {
+            const xpEarned = correctWords * 2;
+            const accuracy = Math.round((correctWords / (correctWords + wrongWords)) * 100) || 0;
+            
+            document.getElementById('res-xp').innerText = `+${xpEarned} XP`;
+            document.getElementById('res-wpm').innerText = correctWords;
+            document.getElementById('res-acc').innerText = `${accuracy}%`;
+            document.getElementById('res-correct').innerText = correctWords;
+            document.getElementById('res-wrong').innerText = wrongWords;
+            toggleModal('result-modal', true);
+
             const ref = db.collection("users").doc(user.uid);
             const doc = await ref.get();
             const data = doc.data();
@@ -301,10 +364,8 @@
                 bests[currentMode] = correctWords;
                 await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "" }, {merge: true});
             }
-            await ref.update({ xp: (data.xp || 0) + (correctWords * 2), best: bests });
+            await ref.update({ xp: (data.xp || 0) + xpEarned, best: bests });
             syncUserData(user); loadLeaderboard();
-            alert(`Finished! Score: ${correctWords} WPM`);
-            resetGame();
         }
     }
 
@@ -336,17 +397,16 @@
         currentRoomId = rid; toggleModal('race-lobby-modal', false);
         document.getElementById('race-section').classList.remove('hidden');
         document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
+        resetGame(); // เตรียมกระดาน
         
         roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
             const data = doc.data(); if(!data) return;
-            
-            // วาดเลนแข่ง (เรียงตาม Key เพื่อไม่ให้ชื่อสลับขึ้นลง)
             const pids = Object.keys(data.players).sort();
             document.getElementById('race-lanes').innerHTML = pids.map(pid => `
                 <div class="race-lane">
                     <div class="race-car" style="left:${(data.players[pid].progress / 100) * 85}%;">
                         <img src="${data.players[pid].photo}" style="width:24px; height:24px; border-radius:50%; border:1px solid var(--primary);">
-                        <span>${data.players[pid].name} (${data.players[pid].count})</span>
+                        <span>${data.players[pid].name} (${data.players[pid].count}/100)</span>
                     </div>
                 </div>`).join('');
 
@@ -354,7 +414,8 @@
                 gameWords = data.words; 
                 document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
                 document.getElementById('start-race-btn').classList.add('hidden');
-                isPlaying = true; startTimer(); 
+                isPlaying = true; 
+                // ไม่เรียก startTimer() เพราะเราเอาเรื่องเวลาออกในโหมดปะลอง
             }
 
             if(data.status === 'finished') {
@@ -378,7 +439,7 @@
                     <img src="${p.photo}" class="rank-img">
                     <span style="${p.id === myId ? 'color:var(--primary); font-weight:bold;' : ''}">${p.name}</span>
                 </div>
-                <b>${p.count} Words</b>
+                <b>${p.count} Correct Words</b>
             </div>
         `).join('');
         toggleModal('race-result-modal', true);
@@ -407,7 +468,7 @@
             await db.collection("users").doc(u.uid).update(updateObj);
             ['th', 'en'].forEach(async m => { await db.collection(`leaderboard_${m}`).doc(u.uid).update(updateObj).catch(()=>{}); });
             await syncUserData(u); toggleModal('settings-modal', false); alert("บันทึกสำเร็จ!");
-        } catch(e) { alert("ล้มเหลว!"); } finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
+        } catch(e) { alert("ล้มล้ว!"); } finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
     }
 
     async function loadLeaderboard() {
