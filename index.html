@@ -15,7 +15,7 @@
         .container { width: 100%; max-width: 850px; padding: 20px; }
         .card { background: var(--card-bg); backdrop-filter: blur(16px); border-radius: 32px; padding: 40px; border: 1px solid var(--border); position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .hidden { display: none !important; }
-        .invisible-stats { opacity: 0; pointer-events: none; }
+        .invisible-stats { opacity: 0; pointer-events: none; transform: scale(0.9); }
 
         .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px 25px; border-radius: 24px; border: 1px solid var(--border); }
         .user-avatar { width: 50px; height: 50px; border-radius: 14px; border: 2px solid var(--primary); object-fit: cover; background: #000; }
@@ -96,7 +96,7 @@
             <div id="race-lanes"></div>
         </div>
 
-        <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px; transition: 0.3s;">
+        <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px; transition:0.3s;">
             <div style="text-align:center;"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size:24px; font-weight:bold; color:var(--secondary);">60s</div></div>
             <div style="text-align:center;"><small style="color:var(--text-dim)">WPM</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
             <div style="text-align:center;"><small style="color:var(--text-dim)">WRONG</small><div id="wrong-live" style="font-size:24px; font-weight:bold; color:var(--secondary);">0</div></div>
@@ -124,7 +124,7 @@
         <input type="file" id="avatar-upload" hidden onchange="handleFileSelect(this)">
         <div style="display:flex; gap:10px; margin-bottom:20px;">
             <button class="btn-p" style="background:#475569" onclick="document.getElementById('avatar-upload').click()">เลือกรูปภาพ</button>
-            <button class="btn-p" onclick="saveSettings()">บันทึกข้อมูล</button>
+            <button id="save-btn-ui" class="btn-p" onclick="saveSettings()">บันทึกข้อมูล</button>
         </div>
         <input type="text" id="settings-name" class="std-input" placeholder="เปลี่ยนชื่อเล่น">
         <button onclick="toggleModal('settings-modal', false)" style="margin-top:15px; background:none; border:none; color:white; cursor:pointer;">ยกเลิก</button>
@@ -153,14 +153,13 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
 
-    // คลังคำศัพท์ภาษาไทย (1 พยางค์ และ 2 พยางค์)
-    const th_1 = ["กอ", "ขอ", "คอ", "งอ", "จอ", "ดอ", "ตอ", "บอ", "ปอ", "รอ", "ลอ", "วอ", "สอ", "หอ", "ออ", "กา", "มา", "นา", "ตา", "พา", "ลา", "หา", "ยา", "ฝา", "ทา", "รำ", "ทำ", "นำ", "จำ", "ดำ", "ดี", "ตี", "นี", "มี", "ปี", "รี", "สี", "ใจ", "ใน", "ไป", "ไว", "ใส", "ใฝ่", "ได้", "ให้", "ใช้", "คน", "มัน", "กิน", "นอน", "รัก", "เดิน", "ดู", "ปู", "หู", "รู้", "สู้", "กู้", "พบ", "จบ", "หลบ", "รบ", "ตบ", "นก", "ตก", "อก", "พก", "ยก", "กด", "จด", "ลด", "สด", "อด", "มด", "บน", "พ้น", "ต้น", "คน", "ทน", "ชน", "จน", "สน", "ลม", "ดม", "จม", "กลม", "สม", "อม", "ผม", "พร", "จร", "สอน", "ตอน", "ขอน", "นอน", "วอน", "ฟ้อน", "ร้อน"];
-    const th_2 = ["บ้าน", "ข้าว", "น้ำ", "รถ", "สวย", "เรียน", "เพื่อน", "พี่", "น้อง", "ป้า", "น้า", "อา", "ปู่", "ย่า", "ตา", "ยาย", "คุณ", "เธอ", "เขา", "เรา", "มัน", "ใคร", "ไหน", "เมื่อ", "แต่", "และ", "เพราะ", "ถึง", "ถ้า", "จึง", "งาน", "เงิน", "ทอง", "รวย", "จน", "แข็ง", "อ่อน", "เร็ว", "ช้า", "สูง", "ต่ำ", "ดำ", "ขาว", "รัก", "หลง", "โกรธ", "เกลียด", "คิด", "เขียน", "อ่าน", "ฟัง", "ถาม", "ตอบ", "ขอบคุณ", "ยินดี", "ขอโทษ", "สวัสดี", "ลาไป", "มาหา", "ใจดี", "ใจดำ", "ไฟฟ้", "หน้าตา", "ท้องฟ้า", "ก้อนเมฆ", "น้ำใจ", "หนังสือ", "ปากกา", "โต๊ะเรียน", "เก้าอี้"];
-    const en_pool = ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "coding", "javascript", "typing", "speed", "test", "world", "future", "system", "logic", "create", "think", "build", "pixel", "power", "keyboard", "screen", "mouse", "click", "data", "base", "cloud", "server", "web", "site"];
+    const th_1 = ["กอ", "ขอ", "คอ", "งอ", "จอ", "ดอ", "ตอ", "บอ", "ปอ", "รอ", "ลอ", "วอ", "สอ", "หอ", "ออ", "กา", "มา", "นา", "ตา", "พา", "ลา", "หา", "ยา", "ฝา", "ทา", "รำ", "ทำ", "นำ", "จำ", "ดำ", "ดี", "ตี", "นี", "มี", "ปี", "รี", "สี", "ใจ", "ใน", "ไป", "ไว", "ใส", "ใฝ่", "ได้", "ให้", "ใช้", "คน", "มัน", "กิน", "นอน", "รัก", "ดู", "ปู", "หู", "รู้", "สู้", "กู้", "พบ", "จบ", "หลบ", "รบ", "ตบ", "นก", "ตก", "อก", "พก", "ยก", "กด", "จด", "ลด", "สด", "อด", "มด", "บน", "พ้น", "ต้น", "ทน", "ชน", "จน", "สน", "ลม", "ดม", "จม", "สม", "อม", "ผม", "พร", "จร", "สอน", "ตอน", "ขอน", "วอน", "ร้อน"];
+    const th_2 = ["บ้านสวย", "ข้าวผัด", "น้ำดื่ม", "รถยนต์", "เรียนเก่ง", "เพื่อนรัก", "ป้าข้าง", "น้ายาย", "คุณแม่", "เราสอง", "ใครกัน", "เมื่อกี้", "แต่ว่า", "เพราะรัก", "ทำงาน", "เงินทอง", "รวยมาก", "แข็งแรง", "รวดเร็ว", "ความสุข", "ใจดี", "ไฟฟ้า", "หน้าตา", "ท้องฟ้า", "น้ำใจ", "หนังสือ", "ปากกา", "โต๊ะเรียน", "เก้าอี้"];
+    const en_pool = ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "coding", "typing", "speed", "test", "world", "future", "system", "logic", "create", "think", "build", "pixel", "power"];
     
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
     let timer = null, timeLeft = 60, correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
-    let userXP = 0, currentRoomId = null, roomUnsub = null;
+    let currentRoomId = null, roomUnsub = null;
 
     auth.onAuthStateChanged(user => {
         if(user) {
@@ -176,7 +175,7 @@
     async function handleAuth(type) {
         const u = document.getElementById('login-user').value.trim();
         const p = document.getElementById('login-pass').value;
-        if(!u || p.length < 6) return alert("ข้อมูลไม่ถูกต้อง");
+        if(!u || p.length < 6) return alert("ข้อมูลไม่ครบ!");
         const email = btoa(unescape(encodeURIComponent(u))).replace(/=/g, "") + "@typing.com";
         try {
             if(type === 'up') {
@@ -184,40 +183,36 @@
                 const robotAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`;
                 await db.collection("users").doc(res.user.uid).set({ name: u, xp: 0, photo: robotAvatar, best: { th: 0, en: 0 } });
             } else await auth.signInWithEmailAndPassword(email, p);
-        } catch(e) { alert("Error!"); }
+        } catch(e) { alert("ชื่อผู้ใช้หรือรหัสผ่านผิด!"); }
     }
 
     async function syncUserData(user) {
-        const doc = await db.collection("users").doc(user.uid).get();
-        if(!doc.exists) return;
-        const data = doc.data();
-        userXP = data.xp || 0;
-        document.getElementById('display-name').innerText = data.name;
-        document.getElementById('display-avatar').src = data.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
-        const lv = Math.floor(Math.sqrt(userXP / 5000)) + 1;
-        document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
-        document.getElementById('xp-fill').style.width = `${((userXP % 5000) / 5000) * 100}%`;
-        document.getElementById('xp-text').innerText = `${userXP.toLocaleString()} XP`;
+        try {
+            const doc = await db.collection("users").doc(user.uid).get();
+            if(!doc.exists) return;
+            const data = doc.data();
+            document.getElementById('display-name').innerText = data.name || "User";
+            document.getElementById('display-avatar').src = data.photo || "";
+            const xp = data.xp || 0;
+            const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
+            document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
+            document.getElementById('xp-fill').style.width = `${((xp % 5000) / 5000) * 100}%`;
+            document.getElementById('xp-text').innerText = `${xp.toLocaleString()} XP`;
+        } catch(e) { console.error("Sync fail", e); }
     }
 
-    // ฟังก์ชันสุ่มตามกฎ 1 พยางค์ (10 คำ) : 2 พยางค์ (1 คำ)
     function generateWords() {
         const count = (currentGameType === 'race') ? 100 : 1000;
         let pool = [];
-        
         if (currentMode === 'th') {
             for (let i = 0; i < count; i++) {
-                // กฎ: 10 คำแรก (0-9) เป็น 1 พยางค์, คำที่ 11 (10) เป็น 2 พยางค์
-                if (i % 11 === 10) {
-                    pool.push(th_2[Math.floor(Math.random() * th_2.length)]);
-                } else {
-                    pool.push(th_1[Math.floor(Math.random() * th_1.length)]);
-                }
+                let mod = i % 10;
+                // สูตร: 8 คำแรก 1 พยางค์ : 2 คำหลัง 2 พยางค์
+                if (mod >= 8) pool.push(th_2[Math.floor(Math.random() * th_2.length)]);
+                else pool.push(th_1[Math.floor(Math.random() * th_1.length)]);
             }
         } else {
-            for (let i = 0; i < count; i++) {
-                pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
-            }
+            for (let i = 0; i < count; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
         }
         return pool;
     }
@@ -230,9 +225,7 @@
         document.getElementById('wrong-live').innerText = "0";
         document.getElementById('typing-input').value = "";
         document.getElementById('typing-input').disabled = false;
-        
         gameWords = generateWords();
-        
         document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
         document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
         updateHighlight();
@@ -248,12 +241,12 @@
     }
 
     document.getElementById('typing-input').addEventListener('input', (e) => {
-        if(!isPlaying && currentGameType === 'practice') { isPlaying = true; startTimer(); }
-        const val = e.target.value;
-        if(val.endsWith(' ')) {
-            const typed = val.trim();
-            if(typed === gameWords[currentWordIndex]) { correctWords++; document.getElementById(`w-${currentWordIndex}`).classList.add('correct'); }
-            else { wrongWords++; document.getElementById(`w-${currentWordIndex}`).classList.add('incorrect'); }
+        if(!isPlaying && e.target.value.trim().length > 0 && currentGameType === 'practice') { isPlaying = true; startTimer(); }
+        if(e.target.value.endsWith(' ')) {
+            const typed = e.target.value.trim();
+            const el = document.getElementById(`w-${currentWordIndex}`);
+            if(typed === gameWords[currentWordIndex]) { correctWords++; el.classList.add('correct'); }
+            else { wrongWords++; el.classList.add('incorrect'); }
             currentWordIndex++; e.target.value = '';
             document.getElementById('wpm-live').innerText = correctWords;
             document.getElementById('wrong-live').innerText = wrongWords;
@@ -266,32 +259,37 @@
 
     async function endGame() {
         isPlaying = false; clearInterval(timer);
+        document.getElementById('typing-input').disabled = true;
         const user = auth.currentUser;
         if(user) {
-            const doc = await db.collection("users").doc(user.uid).get();
+            const ref = db.collection("users").doc(user.uid);
+            const doc = await ref.get();
             const data = doc.data();
-            if(currentGameType === 'practice' && correctWords > (data.best?.[currentMode] || 0)) {
-                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo }, {merge: true});
-                let newBest = data.best || { th: 0, en: 0 };
-                newBest[currentMode] = correctWords;
-                await db.collection("users").doc(user.uid).update({ best: newBest });
+            let bests = data.best || { th: 0, en: 0 };
+            
+            if(currentGameType === 'practice' && correctWords > (bests[currentMode] || 0)) {
+                bests[currentMode] = correctWords;
+                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({
+                    name: data.name, wpm: correctWords, photo: data.photo
+                }, {merge: true});
             }
-            await db.collection("users").doc(user.uid).update({ xp: (data.xp || 0) + (correctWords * 2) });
+            await ref.update({ xp: (data.xp || 0) + (correctWords * 2), best: bests });
             syncUserData(user); loadLeaderboard();
         }
-        alert(`Finished! WPM: ${correctWords}`);
+        alert(`Finished! Score: ${correctWords} WPM`);
         resetGame();
     }
 
     async function loadLeaderboard() {
-        document.getElementById('lb-mode-name').innerText = currentMode === 'th' ? "ภาษาไทย" : "English";
+        const modeName = currentMode === 'th' ? "ภาษาไทย" : "English";
+        document.getElementById('lb-mode-name').innerText = modeName;
         const snap = await db.collection(`leaderboard_${currentMode}`).orderBy("wpm", "desc").limit(1000).get();
         let html = ''; let r = 1;
         snap.forEach(doc => {
             const d = doc.data();
             html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo}" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`;
         });
-        document.getElementById('lb-list-main').innerHTML = html || 'No Data';
+        document.getElementById('lb-list-main').innerHTML = html || '<p style="text-align:center; opacity:0.3">No Data</p>';
     }
 
     function toggleStatsVisibility() {
@@ -304,52 +302,96 @@
         document.getElementById('race-section').classList.add('hidden'); 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`btn-${m}`).classList.add('active');
-        resetGame(); loadLeaderboard(); if(roomUnsub) roomUnsub(); 
+        if(roomUnsub) { roomUnsub(); roomUnsub = null; }
+        resetGame(); loadLeaderboard(); 
     }
 
     function openRaceLobby() { toggleModal('race-lobby-modal', true); }
     async function createRaceRoom() {
         const rid = Math.random().toString(36).substring(7).toUpperCase();
         const rWords = [];
-        // โหมดปะลองสุ่มแบบเดียวกัน
         for (let i = 0; i < 100; i++) {
-            if (i % 11 === 10) rWords.push(th_2[Math.floor(Math.random() * th_2.length)]);
+            let mod = i % 10;
+            if (mod >= 8) rWords.push(th_2[Math.floor(Math.random() * th_2.length)]);
             else rWords.push(th_1[Math.floor(Math.random() * th_1.length)]);
         }
         const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
         await db.collection("rooms").doc(rid).set({ status: 'waiting', words: rWords, players: { [u.uid]: { name: d.name, progress: 0, photo: d.photo } } });
         enterRace(rid);
     }
+
+    async function joinRaceRoom() {
+        const rid = document.getElementById('join-room-input').value.trim().toUpperCase();
+        if(!rid) return;
+        const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
+        await db.collection("rooms").doc(rid).update({ [`players.${u.uid}`]: { name: d.name, progress: 0, photo: d.photo } });
+        enterRace(rid);
+    }
+
     function enterRace(rid) {
         currentRoomId = rid; currentGameType = 'race'; toggleModal('race-lobby-modal', false);
         document.getElementById('race-section').classList.remove('hidden');
         document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-race').classList.add('active');
         roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
             const data = doc.data(); if(!data) return;
             document.getElementById('race-lanes').innerHTML = Object.keys(data.players).map(pid => `
                 <div style="height:30px; border-bottom:1px dashed #444; position:relative; margin-top:5px;">
-                    <div style="position:absolute; left:${data.players[pid].progress*90}%; transition:0.3s; font-size:12px;">🏎️ ${data.players[pid].name}</div>
+                    <div style="position:absolute; left:${data.players[pid].progress*90}%; transition:0.3s; font-size:12px; display:flex; align-items:center; gap:5px;">
+                        <img src="${data.players[pid].photo}" style="width:18px; height:18px; border-radius:50%;"> 🏎️ ${data.players[pid].name}
+                    </div>
                 </div>`).join('');
-            if(data.status === 'playing' && !isPlaying) { gameWords = data.words; renderRaceWords(); isPlaying = true; startTimer(); }
+            if(data.status === 'playing' && !isPlaying) { 
+                gameWords = data.words; 
+                document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
+                isPlaying = true; startTimer(); 
+            }
         });
     }
-    function renderRaceWords() {
-        document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
-        updateHighlight();
-    }
+
     async function triggerRaceStart() { await db.collection("rooms").doc(currentRoomId).update({ status: 'playing' }); }
     function toggleModal(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
-    function openSettings() { toggleModal('settings-modal', true); }
-    function handleFileSelect(i) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); }
+    function openSettings() { toggleModal('settings-modal', true); document.getElementById('settings-preview').src = document.getElementById('display-avatar').src; }
+    function handleFileSelect(i) { if(i.files[0]) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); } }
+
     async function saveSettings() {
-        const u = auth.currentUser; const name = document.getElementById('settings-name').value.trim();
+        const saveBtn = document.getElementById('save-btn-ui');
+        saveBtn.innerText = "กำลังบันทึก..."; saveBtn.disabled = true;
+        const u = auth.currentUser;
+        const newName = document.getElementById('settings-name').value.trim();
         const file = document.getElementById('avatar-upload').files[0];
         let url = document.getElementById('settings-preview').src;
-        if(file) { const ref = storage.ref(`avatars/${u.uid}`); await ref.put(file); url = await ref.getDownloadURL(); }
-        await db.collection("users").doc(u.uid).update({ name: name || u.uid, photo: url });
-        syncUserData(u); toggleModal('settings-modal', false);
+
+        try {
+            // 1. อัปโหลดรูปภาพ (ถ้ามีการเลือกใหม่)
+            if(file) {
+                const ref = storage.ref().child(`avatars/${u.uid}_${Date.now()}`);
+                const task = await ref.put(file);
+                url = await task.ref.getDownloadURL();
+            }
+
+            // 2. อัปเดตข้อมูลใน Firestore User Collection
+            const updateObj = { photo: url };
+            if(newName) updateObj.name = newName;
+            await db.collection("users").doc(u.uid).update(updateObj);
+
+            // 3. อัปเดตข้อมูลใน Leaderboard (ถ้าเคยมีชื่ออยู่)
+            const lbRefTh = db.collection("leaderboard_th").doc(u.uid);
+            const lbRefEn = db.collection("leaderboard_en").doc(u.uid);
+            const [thDoc, enDoc] = await Promise.all([lbRefTh.get(), lbRefEn.get()]);
+            
+            let lbUpdates = [];
+            if(thDoc.exists) lbUpdates.push(lbRefTh.update(updateObj));
+            if(enDoc.exists) lbUpdates.push(lbRefEn.update(updateObj));
+            await Promise.all(lbUpdates);
+
+            await syncUserData(u);
+            toggleModal('settings-modal', false);
+            alert("บันทึกข้อมูลเรียบร้อย!");
+        } catch(e) { 
+            console.error(e);
+            alert("บันทึกไม่สำเร็จ: ตรวจสอบการเชื่อมต่อหรือ Permission"); 
+        }
+        saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false;
     }
 </script>
 </body>
