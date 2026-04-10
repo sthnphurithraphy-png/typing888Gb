@@ -53,7 +53,6 @@
         .race-lane { height: 45px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; display: flex; align-items: center; }
         .race-car { position: absolute; left: 0; transition: 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; }
 
-        /* สไตล์ป๊อปอัพสรุปผล */
         .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
         .result-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px; border: 1px solid var(--border); }
         .result-val { font-size: 24px; font-weight: bold; color: var(--primary); }
@@ -99,7 +98,7 @@
         <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(0,0,0,0.3); padding:20px; border-radius:20px; border: 1px solid var(--primary);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span id="room-id-display" style="color:var(--primary); font-weight:bold;">ROOM: -</span>
-                <span id="race-target" style="color:var(--secondary); font-size: 14px; font-weight: bold;">เป้าหมาย: 100 คำ</span>
+                <span id="race-target" style="color:var(--secondary); font-size: 14px; font-weight: bold;">เป้าหมาย: 100 คำที่ถูกต้อง</span>
                 <button id="start-race-btn" class="btn-p" style="width:auto; padding:5px 20px;" onclick="triggerRaceStart()">เริ่มการแข่ง</button>
             </div>
             <div id="race-lanes"></div>
@@ -165,7 +164,7 @@
 
 <div id="race-lobby-modal" class="modal hidden">
     <div class="modal-content">
-        <h3>🏎️ โหมดปะลอง (ใครครบ 100 คำก่อนชนะ)</h3>
+        <h3>🏎️ โหมดปะลอง (ครบ 100 คำก่อนชนะ)</h3>
         <button class="btn-p" onclick="createRaceRoom()" style="margin-bottom:15px;">สร้างห้องใหม่</button>
         <input type="text" id="join-room-input" class="std-input" placeholder="รหัสห้อง">
         <button class="btn-p" onclick="joinRaceRoom()" style="margin-top:10px;">เข้าร่วมห้อง</button>
@@ -185,10 +184,12 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
 
-    const th_1_easy = ["กอ", "ขอ", "มา", "ตา", "นา", "กา", "ไป", "ใจ", "ใน", "ดี", "ตี", "มี", "รู", "ดู", "รัก", "มัน", "กิน", "นอน", "ลม", "ดม", "สม", "จม", "ตก", "นก", "รถ", "ปลา", "ขา", "หา", "ยา", "ทา", "รำ", "ทำ", "ดำ", "คำ", "พก", "ยก", "กด", "มด", "หด", "วัด", "รัด", "กัด", "จัด", "พัด", "มัด"];
-    const th_1_hard = ["พฤกษ์", "ธรรม", "กรรม", "ศิษย์", "ศาสตร์", "ศิลป์", "เวทย์", "แกร่ง", "พราย", "พราว", "รัฐ", "ภักดิ์", "เลิศ", "ยศ", "ศักดิ์", "ทรัพย์", "นิล", "ทิพย์", "ภูมิ", "จิต", "เขต", "ชาติ", "สิทธิ์", "สรวง", "เศร้า", "พรหม", "ฉัตร"];
-    const th_2_creative = ["ปัญญา", "วิชา", "เวลา", "อนาคต", "ท้องฟ้า", "น้ำใจ", "ความสุข", "มุ่งมั่น", "แบ่งปัน", "ขยัน", "อดทน", "เบิกบาน", "ท้าทาย", "รางวัล", "เป้าหมาย", "ศรัทธา", "เมตตา", "สว่าง", "ไสว", "รุ่งโรจน์", "วิเศษ", "วิจิตร", "บรรจง", "ศึกษา", "มั่นใจ"];
-    const en_pool = ["infinite", "gravity", "nebula", "velocity", "spectrum", "circuit", "binary", "quantum", "dynamic", "logic", "create", "vision", "impact", "legend", "energy"];
+    // ชุดคำศัพท์ 1 พยางค์
+    const th_1_syl = ["ไป", "มา", "ดี", "สวย", "รัก", "มาก", "ทำ", "กิน", "ดู", "ใจ", "ใน", "น้ำ", "รถ", "บ้าน", "นก", "แมว", "ครู", "พ่อ", "แม่", "พี่", "น้อง", "ฟ้า", "ลม", "ฝน", "ไฟ", "ดิน", "หิน", "จาน", "ชาม", "โต๊ะ", "หมู", "ไก่", "ปลา", "กุ้ง", "หอย", "ปู", "มด", "ลิง", "เสือ", "งู", "ไม้", "ดอก", "บาน", "เดิน", "นอน", "ยืน", "นิ่ง", "หอม", "ขาว", "ดำ", "แดง"];
+    // ชุดคำศัพท์ 2 พยางค์
+    const th_2_syl = ["กินข้าว", "นอนหลับ", "ทำงาน", "ดีใจ", "น้ำใจ", "ท้องฟ้า", "น้ำดื่ม", "เดินเล่น", "ต้นไม้", "ปลาทู", "รถยนต์", "คนไทย", "หน้าต่าง", "หนังสือ", "ปากกา", "แม่ค้า", "ตลาด", "น้ำส้ม", "รองเท้า", "เสื้อผ้า", "ดอกไม้", "วันนี้", "พรุ่งนี้", "เมื่อวาน", "อาหาร", "เพื่อนรัก", "คิดถึง", "กระเป๋า", "พัดลม", "เก้าอี้", "ทีวี", "มือถือ", "วิ่งเล่น", "ทะเล", "ภูเขา", "อากาศ", "เย็นใจ", "ยิ้มแย้ม", "รวดเร็ว", "ดูแล", "ปลอดภัย"];
+
+    const en_pool = ["always", "around", "become", "better", "bright", "change", "coffee", "create", "dream", "energy", "family", "friend", "future", "garden", "growth", "happy", "health", "inside", "journey", "kindly", "learn", "light", "listen", "memory", "morning", "nature", "online", "people", "planet", "simple", "smile", "strong", "system", "thanks", "travel", "update", "vision", "window", "wonder", "world"];
     
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
     let timer = null, timeLeft = 60, correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
@@ -233,18 +234,22 @@
     }
 
     function generateWords() {
-        const count = 1000; // สุ่มมาเลย 1,000 คำตามสั่ง
+        const total = 1000;
         let pool = [];
         const activeMode = (currentGameType === 'race') ? 'th' : currentMode;
+        
         if (activeMode === 'th') {
-            for (let i = 0; i < count; i++) {
-                let mod = i % 10;
-                if (mod < 6) pool.push(th_1_easy[Math.floor(Math.random() * th_1_easy.length)]);
-                else if (mod < 8) pool.push(th_1_hard[Math.floor(Math.random() * th_1_hard.length)]);
-                else pool.push(th_2_creative[Math.floor(Math.random() * th_2_creative.length)]);
+            // ลอจิก: 1 พยางค์ 8 คำ สลับ 2 พยางค์ 2 คำ
+            while (pool.length < total) {
+                for (let i = 0; i < 8 && pool.length < total; i++) {
+                    pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
+                }
+                for (let j = 0; j < 2 && pool.length < total; j++) {
+                    pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
+                }
             }
         } else {
-            for (let i = 0; i < count; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
+            for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
         }
         return pool;
     }
@@ -253,10 +258,9 @@
         clearInterval(timer); isPlaying = false; timeLeft = 60;
         correctWords = 0; wrongWords = 0; currentWordIndex = 0;
         
-        // จัดการ UI ตามโหมด
         if(currentGameType === 'race') {
             document.getElementById('timer-box').classList.add('hidden');
-            document.getElementById('stat-label').innerText = "CORRECT WORDS";
+            document.getElementById('stat-label').innerText = "CORRECT";
         } else {
             document.getElementById('timer-box').classList.remove('hidden');
             document.getElementById('stat-label').innerText = "WPM/WORDS";
@@ -294,7 +298,7 @@
 
         if(!isPlaying && val.trim().length > 0) { 
             isPlaying = true; 
-            if(currentGameType !== 'race') startTimer(); // โหมดปะลองไม่ต้องนับเวลาถอยหลัง
+            if(currentGameType !== 'race') startTimer();
         }
         
         if(val.endsWith(' ')) {
@@ -302,22 +306,17 @@
             if(typed === targetWord) { 
                 correctWords++; 
                 wordEl.classList.add('correct'); 
-                
-                // เฉพาะโหมดปะลอง: อัปเดต Progress เมื่อพิมพ์ถูกเท่านั้น
                 if(currentGameType === 'race') {
                     db.collection("rooms").doc(currentRoomId).update({ 
-                        [`players.${auth.currentUser.uid}.progress`]: correctWords, // ใช้ correctWords เป็นเกณฑ์วิ่ง
+                        [`players.${auth.currentUser.uid}.progress`]: correctWords,
                         [`players.${auth.currentUser.uid}.count`]: correctWords 
                     });
-                    // ใครครบ 100 คำก่อนชนะ
                     if(correctWords >= 100) endGame(); 
                 }
-            }
-            else { 
+            } else { 
                 wrongWords++; 
                 wordEl.classList.add('incorrect'); 
             }
-            
             currentWordIndex++; 
             e.target.value = '';
             document.getElementById('wpm-live').innerText = correctWords;
@@ -347,8 +346,7 @@
             await db.collection("rooms").doc(currentRoomId).update({ status: 'finished' });
         } else if(user) {
             const xpEarned = correctWords * 2;
-            const accuracy = Math.round((correctWords / (correctWords + wrongWords)) * 100) || 0;
-            
+            const accuracy = Math.round((correctWords / (correctWords + (wrongWords||0))) * 100) || 0;
             document.getElementById('res-xp').innerText = `+${xpEarned} XP`;
             document.getElementById('res-wpm').innerText = correctWords;
             document.getElementById('res-acc').innerText = `${accuracy}%`;
@@ -397,7 +395,7 @@
         currentRoomId = rid; toggleModal('race-lobby-modal', false);
         document.getElementById('race-section').classList.remove('hidden');
         document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
-        resetGame(); // เตรียมกระดาน
+        resetGame();
         
         roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
             const data = doc.data(); if(!data) return;
@@ -409,19 +407,13 @@
                         <span>${data.players[pid].name} (${data.players[pid].count}/100)</span>
                     </div>
                 </div>`).join('');
-
             if(data.status === 'playing' && !isPlaying) { 
                 gameWords = data.words; 
                 document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
                 document.getElementById('start-race-btn').classList.add('hidden');
                 isPlaying = true; 
-                // ไม่เรียก startTimer() เพราะเราเอาเรื่องเวลาออกในโหมดปะลอง
             }
-
-            if(data.status === 'finished') {
-                showRaceResults(data.players);
-                if(roomUnsub) { roomUnsub(); roomUnsub = null; }
-            }
+            if(data.status === 'finished') { showRaceResults(data.players); if(roomUnsub) { roomUnsub(); roomUnsub = null; } }
         });
     }
 
@@ -430,7 +422,6 @@
         const sorted = Object.keys(players).map(id => ({id, ...players[id]})).sort((a,b) => b.count - a.count);
         const myId = auth.currentUser.uid;
         const myRank = sorted.findIndex(p => p.id === myId) + 1;
-
         document.getElementById('race-result-header').innerText = (myRank === 1) ? "YOU WIN! 🏆" : "YOU LOST! 💀";
         document.getElementById('race-result-list').innerHTML = sorted.map((p, i) => `
             <div class="rank-item" style="border: 1px solid ${i===0?'var(--primary)':'transparent'}">
@@ -468,7 +459,7 @@
             await db.collection("users").doc(u.uid).update(updateObj);
             ['th', 'en'].forEach(async m => { await db.collection(`leaderboard_${m}`).doc(u.uid).update(updateObj).catch(()=>{}); });
             await syncUserData(u); toggleModal('settings-modal', false); alert("บันทึกสำเร็จ!");
-        } catch(e) { alert("ล้มล้ว!"); } finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
+        } catch(e) { alert("ล้มเหลว!"); } finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
     }
 
     async function loadLeaderboard() {
