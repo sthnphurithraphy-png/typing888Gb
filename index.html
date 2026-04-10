@@ -28,8 +28,9 @@
         
         .word-display-container { font-size: 28px; padding: 25px; background: var(--input-bg); border-radius: 22px; margin-bottom: 20px; height: 100px; overflow: hidden; border: 2px solid var(--border); line-height: 1.6; }
         #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 10px 20px; transition: 0.2s; }
-        .word { color: var(--text-dim); }
+        .word { color: var(--text-dim); transition: 0.1s; }
         .word.active { color: var(--text-main); border-bottom: 3px solid var(--primary); }
+        .word.error-typing { color: var(--secondary) !important; text-shadow: 0 0 10px rgba(251, 113, 133, 0.4); }
         .word.correct { color: var(--primary); }
         .word.incorrect { color: var(--secondary); text-decoration: line-through; }
 
@@ -41,15 +42,13 @@
         .leaderboard-footer { margin-top: 35px; background: rgba(15, 23, 42, 0.4); border-radius: 24px; padding: 25px; border: 1px solid var(--border); }
         .lb-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; color: var(--primary); font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .lb-scroll { max-height: 400px; overflow-y: auto; }
-        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 10px; border: 1px solid transparent; }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 10px; }
         .rank-info { display: flex; align-items: center; gap: 15px; }
         .rank-img { width: 35px; height: 35px; border-radius: 10px; object-fit: cover; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px); }
         .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 420px; text-align: center; border: 1px solid var(--primary); }
-        
         .icon-btn { cursor: pointer; background: var(--input-bg); border: 1px solid var(--border); padding: 10px; border-radius: 15px; transition: 0.3s; color: white; }
-        .icon-btn:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -65,7 +64,7 @@
 
     <div id="game-ui" class="card hidden">
         <div style="position: absolute; top: 25px; right: 25px; display: flex; gap: 10px;">
-            <div class="icon-btn" onclick="toggleStatsVisibility()" title="เปิด/ปิด สถิติ">👁️</div>
+            <div class="icon-btn" onclick="toggleStatsVisibility()">👁️</div>
             <div class="icon-btn" onclick="openSettings()">⚙️</div>
             <div class="icon-btn" onclick="auth.signOut()">🚪</div>
         </div>
@@ -96,7 +95,7 @@
             <div id="race-lanes"></div>
         </div>
 
-        <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px; transition:0.3s;">
+        <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px;">
             <div style="text-align:center;"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size:24px; font-weight:bold; color:var(--secondary);">60s</div></div>
             <div style="text-align:center;"><small style="color:var(--text-dim)">WPM</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
             <div style="text-align:center;"><small style="color:var(--text-dim)">WRONG</small><div id="wrong-live" style="font-size:24px; font-weight:bold; color:var(--secondary);">0</div></div>
@@ -105,7 +104,7 @@
         <div class="word-display-container"><div id="word-list-wrapper"></div></div>
         <input type="text" id="typing-input" class="std-input" placeholder="เริ่มพิมพ์ที่นี่..." autocomplete="off">
         
-        <button class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มคำศัพท์ใหม่ (1,000 คำ)</button>
+        <button class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มคำศัพท์ใหม่</button>
 
         <div class="leaderboard-footer">
             <div class="lb-title">
@@ -153,9 +152,12 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
 
-    const th_1 = ["กอ", "ขอ", "คอ", "งอ", "จอ", "ดอ", "ตอ", "บอ", "ปอ", "รอ", "ลอ", "วอ", "สอ", "หอ", "ออ", "กา", "มา", "นา", "ตา", "พา", "ลา", "หา", "ยา", "ฝา", "ทา", "รำ", "ทำ", "นำ", "จำ", "ดำ", "ดี", "ตี", "นี", "มี", "ปี", "รี", "สี", "ใจ", "ใน", "ไป", "ไว", "ใส", "ใฝ่", "ได้", "ให้", "ใช้", "คน", "มัน", "กิน", "นอน", "รัก", "ดู", "ปู", "หู", "รู้", "สู้", "กู้", "พบ", "จบ", "หลบ", "รบ", "ตบ", "นก", "ตก", "อก", "พก", "ยก", "กด", "จด", "ลด", "สด", "อด", "มด", "บน", "พ้น", "ต้น", "ทน", "ชน", "จน", "สน", "ลม", "ดม", "จม", "สม", "อม", "ผม", "พร", "จร", "สอน", "ตอน", "ขอน", "วอน", "ร้อน"];
-    const th_2 = ["บ้านสวย", "ข้าวผัด", "น้ำดื่ม", "รถยนต์", "เรียนเก่ง", "เพื่อนรัก", "ป้าข้าง", "น้ายาย", "คุณแม่", "เราสอง", "ใครกัน", "เมื่อกี้", "แต่ว่า", "เพราะรัก", "ทำงาน", "เงินทอง", "รวยมาก", "แข็งแรง", "รวดเร็ว", "ความสุข", "ใจดี", "ไฟฟ้า", "หน้าตา", "ท้องฟ้า", "น้ำใจ", "หนังสือ", "ปากกา", "โต๊ะเรียน", "เก้าอี้"];
-    const en_pool = ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "coding", "typing", "speed", "test", "world", "future", "system", "logic", "create", "think", "build", "pixel", "power"];
+    // --- ส่วนแก้ไขคลังคำศัพท์: ง่ายสลับยาก ---
+    const th_1_easy = ["กอ", "ขอ", "มา", "ตา", "นา", "กา", "ไป", "ใจ", "ใน", "ดี", "ตี", "มี", "รู", "ดู", "รัก", "มัน", "กิน", "นอน", "ลม", "ดม", "สม", "จม", "ตก", "นก", "รถ", "ปลา", "ขา", "หา", "ยา", "ทา", "รำ", "ทำ", "ดำ", "คำ", "พก", "ยก", "กด", "มด", "หด", "วัด", "รัด", "กัด", "จัด", "พัด", "มัด"];
+    const th_1_hard = ["พฤกษ์", "ธรรม", "กรรม", "ศิษย์", "ศาสตร์", "ศิลป์", "เวทย์", "แกร่ง", "พราย", "พราว", "รัฐ", "ภักดิ์", "เลิศ", "ยศ", "ศักดิ์", "ทรัพย์", "นิล", "ทิพย์", "ภูมิ", "จิต", "เขต", "ชาติ", "สิทธิ์", "สรวง", "เศร้า", "พรหม", "ฉัตร"];
+    const th_2_creative = ["ปัญญา", "วิชา", "เวลา", "อนาคต", "ท้องฟ้า", "น้ำใจ", "ความสุข", "มุ่งมั่น", "แบ่งปัน", "ขยัน", "อดทน", "เบิกบาน", "ท้าทาย", "รางวัล", "เป้าหมาย", "ศรัทธา", "เมตตา", "สว่าง", "ไสว", "รุ่งโรจน์", "วิเศษ", "วิจิตร", "บรรจง", "ศึกษา", "มั่นใจ"];
+    
+    const en_pool = ["infinite", "gravity", "nebula", "velocity", "spectrum", "circuit", "binary", "quantum", "dynamic", "logic", "create", "vision", "impact", "legend", "energy"];
     
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
     let timer = null, timeLeft = 60, correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
@@ -201,15 +203,20 @@
         } catch(e) { console.error("Sync fail", e); }
     }
 
+    // --- ส่วนแก้ไข: Logic การสุ่ม 8:2 (ง่าย 6, ยาก 2, 2พยางค์ 2) ---
     function generateWords() {
         const count = (currentGameType === 'race') ? 100 : 1000;
         let pool = [];
         if (currentMode === 'th') {
             for (let i = 0; i < count; i++) {
                 let mod = i % 10;
-                // สูตร: 8 คำแรก 1 พยางค์ : 2 คำหลัง 2 พยางค์
-                if (mod >= 8) pool.push(th_2[Math.floor(Math.random() * th_2.length)]);
-                else pool.push(th_1[Math.floor(Math.random() * th_1.length)]);
+                if (mod < 6) { // 6 คำแรก 1 พยางค์ง่าย
+                    pool.push(th_1_easy[Math.floor(Math.random() * th_1_easy.length)]);
+                } else if (mod < 8) { // 2 คำต่อมา 1 พยางค์ยาก
+                    pool.push(th_1_hard[Math.floor(Math.random() * th_1_hard.length)]);
+                } else { // 2 คำสุดท้าย 2 พยางค์สร้างสรรค์
+                    pool.push(th_2_creative[Math.floor(Math.random() * th_2_creative.length)]);
+                }
             }
         } else {
             for (let i = 0; i < count; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
@@ -232,7 +239,7 @@
     }
 
     function updateHighlight() {
-        document.querySelectorAll('.word').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.word').forEach(el => el.classList.remove('active', 'error-typing'));
         const cur = document.getElementById(`w-${currentWordIndex}`);
         if(cur) {
             cur.classList.add('active');
@@ -240,41 +247,54 @@
         }
     }
 
+    // ระบบตรวจคำผิดแบบทันที (Real-time Error)
     document.getElementById('typing-input').addEventListener('input', (e) => {
-        if(!isPlaying && e.target.value.trim().length > 0 && currentGameType === 'practice') { isPlaying = true; startTimer(); }
-        if(e.target.value.endsWith(' ')) {
-            const typed = e.target.value.trim();
-            const el = document.getElementById(`w-${currentWordIndex}`);
-            if(typed === gameWords[currentWordIndex]) { correctWords++; el.classList.add('correct'); }
-            else { wrongWords++; el.classList.add('incorrect'); }
+        const val = e.target.value;
+        const targetWord = gameWords[currentWordIndex];
+        const wordEl = document.getElementById(`w-${currentWordIndex}`);
+
+        if(!isPlaying && val.trim().length > 0 && currentGameType === 'practice') { isPlaying = true; startTimer(); }
+        
+        if(val.endsWith(' ')) {
+            const typed = val.trim();
+            if(typed === targetWord) { correctWords++; wordEl.classList.add('correct'); }
+            else { wrongWords++; wordEl.classList.add('incorrect'); }
             currentWordIndex++; e.target.value = '';
             document.getElementById('wpm-live').innerText = correctWords;
             document.getElementById('wrong-live').innerText = wrongWords;
             updateHighlight();
             if(currentGameType === 'race') db.collection("rooms").doc(currentRoomId).update({ [`players.${auth.currentUser.uid}.progress`]: currentWordIndex / gameWords.length });
+        } else {
+            if (targetWord && !targetWord.startsWith(val)) {
+                wordEl.classList.add('error-typing');
+            } else {
+                wordEl.classList.remove('error-typing');
+            }
         }
     });
 
     function startTimer() { timer = setInterval(() => { timeLeft--; document.getElementById('timer').innerText = timeLeft + "s"; if(timeLeft <= 0) endGame(); }, 1000); }
 
+    // ระบบบันทึกสถิติ
     async function endGame() {
         isPlaying = false; clearInterval(timer);
         document.getElementById('typing-input').disabled = true;
         const user = auth.currentUser;
         if(user) {
-            const ref = db.collection("users").doc(user.uid);
-            const doc = await ref.get();
-            const data = doc.data();
-            let bests = data.best || { th: 0, en: 0 };
-            
-            if(currentGameType === 'practice' && correctWords > (bests[currentMode] || 0)) {
-                bests[currentMode] = correctWords;
-                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({
-                    name: data.name, wpm: correctWords, photo: data.photo
-                }, {merge: true});
-            }
-            await ref.update({ xp: (data.xp || 0) + (correctWords * 2), best: bests });
-            syncUserData(user); loadLeaderboard();
+            try {
+                const ref = db.collection("users").doc(user.uid);
+                const doc = await ref.get();
+                const data = doc.data();
+                let bests = data.best || { th: 0, en: 0 };
+                if(currentGameType === 'practice' && correctWords > (bests[currentMode] || 0)) {
+                    bests[currentMode] = correctWords;
+                    await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({
+                        name: data.name, wpm: correctWords, photo: data.photo || ""
+                    }, {merge: true});
+                }
+                await ref.update({ xp: (data.xp || 0) + (correctWords * 2), best: bests });
+                syncUserData(user); loadLeaderboard();
+            } catch (err) { console.error("Save error:", err); }
         }
         alert(`Finished! Score: ${correctWords} WPM`);
         resetGame();
@@ -309,12 +329,7 @@
     function openRaceLobby() { toggleModal('race-lobby-modal', true); }
     async function createRaceRoom() {
         const rid = Math.random().toString(36).substring(7).toUpperCase();
-        const rWords = [];
-        for (let i = 0; i < 100; i++) {
-            let mod = i % 10;
-            if (mod >= 8) rWords.push(th_2[Math.floor(Math.random() * th_2.length)]);
-            else rWords.push(th_1[Math.floor(Math.random() * th_1.length)]);
-        }
+        const rWords = generateWords(); // ใช้ชุด 100 คำที่สุ่มแบบเดิม
         const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
         await db.collection("rooms").doc(rid).set({ status: 'waiting', words: rWords, players: { [u.uid]: { name: d.name, progress: 0, photo: d.photo } } });
         enterRace(rid);
@@ -353,6 +368,7 @@
     function openSettings() { toggleModal('settings-modal', true); document.getElementById('settings-preview').src = document.getElementById('display-avatar').src; }
     function handleFileSelect(i) { if(i.files[0]) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); } }
 
+    // ระบบอัปโหลดรูปโปรไฟล์
     async function saveSettings() {
         const saveBtn = document.getElementById('save-btn-ui');
         saveBtn.innerText = "กำลังบันทึก..."; saveBtn.disabled = true;
@@ -362,36 +378,23 @@
         let url = document.getElementById('settings-preview').src;
 
         try {
-            // 1. อัปโหลดรูปภาพ (ถ้ามีการเลือกใหม่)
             if(file) {
                 const ref = storage.ref().child(`avatars/${u.uid}_${Date.now()}`);
                 const task = await ref.put(file);
                 url = await task.ref.getDownloadURL();
             }
-
-            // 2. อัปเดตข้อมูลใน Firestore User Collection
             const updateObj = { photo: url };
             if(newName) updateObj.name = newName;
             await db.collection("users").doc(u.uid).update(updateObj);
-
-            // 3. อัปเดตข้อมูลใน Leaderboard (ถ้าเคยมีชื่ออยู่)
-            const lbRefTh = db.collection("leaderboard_th").doc(u.uid);
-            const lbRefEn = db.collection("leaderboard_en").doc(u.uid);
-            const [thDoc, enDoc] = await Promise.all([lbRefTh.get(), lbRefEn.get()]);
-            
-            let lbUpdates = [];
-            if(thDoc.exists) lbUpdates.push(lbRefTh.update(updateObj));
-            if(enDoc.exists) lbUpdates.push(lbRefEn.update(updateObj));
-            await Promise.all(lbUpdates);
-
+            const modes = ['th', 'en'];
+            for(const m of modes) {
+                await db.collection(`leaderboard_${m}`).doc(u.uid).update(updateObj).catch(() => {});
+            }
             await syncUserData(u);
             toggleModal('settings-modal', false);
             alert("บันทึกข้อมูลเรียบร้อย!");
-        } catch(e) { 
-            console.error(e);
-            alert("บันทึกไม่สำเร็จ: ตรวจสอบการเชื่อมต่อหรือ Permission"); 
-        }
-        saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false;
+        } catch(e) { alert("บันทึกไม่สำเร็จ! ตรวจสอบการเชื่อมต่อ"); }
+        finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
     }
 </script>
 </body>
