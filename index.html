@@ -49,6 +49,10 @@
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px); }
         .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 420px; text-align: center; border: 1px solid var(--primary); }
         .icon-btn { cursor: pointer; background: var(--input-bg); border: 1px solid var(--border); padding: 10px; border-radius: 15px; transition: 0.3s; color: white; }
+        
+        /* สไตล์พิเศษสำหรับเลนแข่ง */
+        .race-lane { height: 45px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; display: flex; align-items: center; }
+        .race-car { position: absolute; left: 0; transition: 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -87,24 +91,24 @@
             <div class="mode-btn" id="btn-race" onclick="openRaceLobby()">🏎️ โหมดปะลอง</div>
         </div>
 
-        <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(0,0,0,0.3); padding:20px; border-radius:20px;">
+        <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(0,0,0,0.3); padding:20px; border-radius:20px; border: 1px solid var(--primary);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span id="room-id-display" style="color:var(--primary); font-weight:bold;">ROOM: -</span>
-                <button class="btn-p" style="width:auto; padding:5px 20px;" onclick="triggerRaceStart()">เริ่มการแข่ง</button>
+                <button id="start-race-btn" class="btn-p" style="width:auto; padding:5px 20px;" onclick="triggerRaceStart()">เริ่มการแข่ง</button>
             </div>
             <div id="race-lanes"></div>
         </div>
 
         <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px;">
             <div style="text-align:center;"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size:24px; font-weight:bold; color:var(--secondary);">60s</div></div>
-            <div style="text-align:center;"><small style="color:var(--text-dim)">WPM</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
+            <div style="text-align:center;"><small style="color:var(--text-dim)">WPM/WORDS</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
             <div style="text-align:center;"><small style="color:var(--text-dim)">WRONG</small><div id="wrong-live" style="font-size:24px; font-weight:bold; color:var(--secondary);">0</div></div>
         </div>
 
         <div class="word-display-container"><div id="word-list-wrapper"></div></div>
         <input type="text" id="typing-input" class="std-input" placeholder="เริ่มพิมพ์ที่นี่..." autocomplete="off">
         
-        <button class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มคำศัพท์ใหม่</button>
+        <button class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มใหม่</button>
 
         <div class="leaderboard-footer">
             <div class="lb-title">
@@ -113,6 +117,16 @@
             </div>
             <div class="lb-scroll" id="lb-list-main"></div>
         </div>
+    </div>
+</div>
+
+<div id="race-result-modal" class="modal hidden">
+    <div class="modal-content" style="width: 500px; border: 2px solid var(--primary);">
+        <h1 id="race-result-header" style="color: var(--primary); margin-bottom: 5px;">YOU WIN!</h1>
+        <p id="race-result-sub" style="color: var(--text-dim); margin-bottom: 20px;">สรุปผลการแข่งขัน</p>
+        <div id="race-result-list" style="text-align: left; margin-bottom: 25px;">
+            </div>
+        <button class="btn-p" onclick="closeRaceResult()">กลับสู่หน้าหลัก</button>
     </div>
 </div>
 
@@ -152,11 +166,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
 
-    // --- ส่วนแก้ไขคลังคำศัพท์: ง่ายสลับยาก ---
     const th_1_easy = ["กอ", "ขอ", "มา", "ตา", "นา", "กา", "ไป", "ใจ", "ใน", "ดี", "ตี", "มี", "รู", "ดู", "รัก", "มัน", "กิน", "นอน", "ลม", "ดม", "สม", "จม", "ตก", "นก", "รถ", "ปลา", "ขา", "หา", "ยา", "ทา", "รำ", "ทำ", "ดำ", "คำ", "พก", "ยก", "กด", "มด", "หด", "วัด", "รัด", "กัด", "จัด", "พัด", "มัด"];
     const th_1_hard = ["พฤกษ์", "ธรรม", "กรรม", "ศิษย์", "ศาสตร์", "ศิลป์", "เวทย์", "แกร่ง", "พราย", "พราว", "รัฐ", "ภักดิ์", "เลิศ", "ยศ", "ศักดิ์", "ทรัพย์", "นิล", "ทิพย์", "ภูมิ", "จิต", "เขต", "ชาติ", "สิทธิ์", "สรวง", "เศร้า", "พรหม", "ฉัตร"];
     const th_2_creative = ["ปัญญา", "วิชา", "เวลา", "อนาคต", "ท้องฟ้า", "น้ำใจ", "ความสุข", "มุ่งมั่น", "แบ่งปัน", "ขยัน", "อดทน", "เบิกบาน", "ท้าทาย", "รางวัล", "เป้าหมาย", "ศรัทธา", "เมตตา", "สว่าง", "ไสว", "รุ่งโรจน์", "วิเศษ", "วิจิตร", "บรรจง", "ศึกษา", "มั่นใจ"];
-    
     const en_pool = ["infinite", "gravity", "nebula", "velocity", "spectrum", "circuit", "binary", "quantum", "dynamic", "logic", "create", "vision", "impact", "legend", "energy"];
     
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
@@ -189,34 +201,30 @@
     }
 
     async function syncUserData(user) {
-        try {
-            const doc = await db.collection("users").doc(user.uid).get();
-            if(!doc.exists) return;
-            const data = doc.data();
-            document.getElementById('display-name').innerText = data.name || "User";
-            document.getElementById('display-avatar').src = data.photo || "";
-            const xp = data.xp || 0;
-            const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
-            document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
-            document.getElementById('xp-fill').style.width = `${((xp % 5000) / 5000) * 100}%`;
-            document.getElementById('xp-text').innerText = `${xp.toLocaleString()} XP`;
-        } catch(e) { console.error("Sync fail", e); }
+        const doc = await db.collection("users").doc(user.uid).get();
+        if(!doc.exists) return;
+        const data = doc.data();
+        document.getElementById('display-name').innerText = data.name || "User";
+        document.getElementById('display-avatar').src = data.photo || "";
+        const xp = data.xp || 0;
+        const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
+        document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
+        document.getElementById('xp-fill').style.width = `${((xp % 5000) / 5000) * 100}%`;
+        document.getElementById('xp-text').innerText = `${xp.toLocaleString()} XP`;
     }
 
-    // --- ส่วนแก้ไข: Logic การสุ่ม 8:2 (ง่าย 6, ยาก 2, 2พยางค์ 2) ---
     function generateWords() {
         const count = (currentGameType === 'race') ? 100 : 1000;
         let pool = [];
-        if (currentMode === 'th') {
+        // Force เป็นภาษาไทยถ้าเป็นโหมด Race
+        const activeMode = (currentGameType === 'race') ? 'th' : currentMode;
+        
+        if (activeMode === 'th') {
             for (let i = 0; i < count; i++) {
                 let mod = i % 10;
-                if (mod < 6) { // 6 คำแรก 1 พยางค์ง่าย
-                    pool.push(th_1_easy[Math.floor(Math.random() * th_1_easy.length)]);
-                } else if (mod < 8) { // 2 คำต่อมา 1 พยางค์ยาก
-                    pool.push(th_1_hard[Math.floor(Math.random() * th_1_hard.length)]);
-                } else { // 2 คำสุดท้าย 2 พยางค์สร้างสรรค์
-                    pool.push(th_2_creative[Math.floor(Math.random() * th_2_creative.length)]);
-                }
+                if (mod < 6) pool.push(th_1_easy[Math.floor(Math.random() * th_1_easy.length)]);
+                else if (mod < 8) pool.push(th_1_hard[Math.floor(Math.random() * th_1_hard.length)]);
+                else pool.push(th_2_creative[Math.floor(Math.random() * th_2_creative.length)]);
             }
         } else {
             for (let i = 0; i < count; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
@@ -247,7 +255,6 @@
         }
     }
 
-    // ระบบตรวจคำผิดแบบทันที (Real-time Error)
     document.getElementById('typing-input').addEventListener('input', (e) => {
         const val = e.target.value;
         const targetWord = gameWords[currentWordIndex];
@@ -263,41 +270,144 @@
             document.getElementById('wpm-live').innerText = correctWords;
             document.getElementById('wrong-live').innerText = wrongWords;
             updateHighlight();
-            if(currentGameType === 'race') db.collection("rooms").doc(currentRoomId).update({ [`players.${auth.currentUser.uid}.progress`]: currentWordIndex / gameWords.length });
-        } else {
-            if (targetWord && !targetWord.startsWith(val)) {
-                wordEl.classList.add('error-typing');
-            } else {
-                wordEl.classList.remove('error-typing');
+            if(currentGameType === 'race') {
+                db.collection("rooms").doc(currentRoomId).update({ 
+                    [`players.${auth.currentUser.uid}.progress`]: currentWordIndex,
+                    [`players.${auth.currentUser.uid}.count`]: currentWordIndex 
+                });
+                if(currentWordIndex >= gameWords.length) endGame();
             }
+        } else {
+            if (targetWord && !targetWord.startsWith(val)) wordEl.classList.add('error-typing');
+            else wordEl.classList.remove('error-typing');
         }
     });
 
     function startTimer() { timer = setInterval(() => { timeLeft--; document.getElementById('timer').innerText = timeLeft + "s"; if(timeLeft <= 0) endGame(); }, 1000); }
 
-    // ระบบบันทึกสถิติ
     async function endGame() {
         isPlaying = false; clearInterval(timer);
         document.getElementById('typing-input').disabled = true;
         const user = auth.currentUser;
-        if(user) {
-            try {
-                const ref = db.collection("users").doc(user.uid);
-                const doc = await ref.get();
-                const data = doc.data();
-                let bests = data.best || { th: 0, en: 0 };
-                if(currentGameType === 'practice' && correctWords > (bests[currentMode] || 0)) {
-                    bests[currentMode] = correctWords;
-                    await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({
-                        name: data.name, wpm: correctWords, photo: data.photo || ""
-                    }, {merge: true});
-                }
-                await ref.update({ xp: (data.xp || 0) + (correctWords * 2), best: bests });
-                syncUserData(user); loadLeaderboard();
-            } catch (err) { console.error("Save error:", err); }
+
+        if(currentGameType === 'race') {
+            await db.collection("rooms").doc(currentRoomId).update({ status: 'finished' });
+        } else if(user) {
+            const ref = db.collection("users").doc(user.uid);
+            const doc = await ref.get();
+            const data = doc.data();
+            let bests = data.best || { th: 0, en: 0 };
+            if(correctWords > (bests[currentMode] || 0)) {
+                bests[currentMode] = correctWords;
+                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "" }, {merge: true});
+            }
+            await ref.update({ xp: (data.xp || 0) + (correctWords * 2), best: bests });
+            syncUserData(user); loadLeaderboard();
+            alert(`Finished! Score: ${correctWords} WPM`);
+            resetGame();
         }
-        alert(`Finished! Score: ${correctWords} WPM`);
+    }
+
+    function openRaceLobby() { toggleModal('race-lobby-modal', true); }
+    
+    async function createRaceRoom() {
+        const rid = Math.random().toString(36).substring(7).toUpperCase();
+        currentGameType = 'race';
+        const rWords = generateWords();
+        const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
+        await db.collection("rooms").doc(rid).set({ 
+            status: 'waiting', 
+            words: rWords, 
+            players: { [u.uid]: { name: d.name, progress: 0, count: 0, photo: d.photo } } 
+        });
+        enterRace(rid);
+    }
+
+    async function joinRaceRoom() {
+        const rid = document.getElementById('join-room-input').value.trim().toUpperCase();
+        if(!rid) return;
+        currentGameType = 'race';
+        const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
+        await db.collection("rooms").doc(rid).update({ [`players.${u.uid}`]: { name: d.name, progress: 0, count: 0, photo: d.photo } });
+        enterRace(rid);
+    }
+
+    function enterRace(rid) {
+        currentRoomId = rid; toggleModal('race-lobby-modal', false);
+        document.getElementById('race-section').classList.remove('hidden');
+        document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
+        
+        roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
+            const data = doc.data(); if(!data) return;
+            
+            // วาดเลนแข่ง (เรียงตาม Key เพื่อไม่ให้ชื่อสลับขึ้นลง)
+            const pids = Object.keys(data.players).sort();
+            document.getElementById('race-lanes').innerHTML = pids.map(pid => `
+                <div class="race-lane">
+                    <div class="race-car" style="left:${(data.players[pid].progress / 100) * 85}%;">
+                        <img src="${data.players[pid].photo}" style="width:24px; height:24px; border-radius:50%; border:1px solid var(--primary);">
+                        <span>${data.players[pid].name} (${data.players[pid].count})</span>
+                    </div>
+                </div>`).join('');
+
+            if(data.status === 'playing' && !isPlaying) { 
+                gameWords = data.words; 
+                document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
+                document.getElementById('start-race-btn').classList.add('hidden');
+                isPlaying = true; startTimer(); 
+            }
+
+            if(data.status === 'finished') {
+                showRaceResults(data.players);
+                if(roomUnsub) { roomUnsub(); roomUnsub = null; }
+            }
+        });
+    }
+
+    function showRaceResults(players) {
+        clearInterval(timer); isPlaying = false;
+        const sorted = Object.keys(players).map(id => ({id, ...players[id]})).sort((a,b) => b.count - a.count);
+        const myId = auth.currentUser.uid;
+        const myRank = sorted.findIndex(p => p.id === myId) + 1;
+
+        document.getElementById('race-result-header').innerText = (myRank === 1) ? "YOU WIN! 🏆" : "YOU LOST! 💀";
+        document.getElementById('race-result-list').innerHTML = sorted.map((p, i) => `
+            <div class="rank-item" style="border: 1px solid ${i===0?'var(--primary)':'transparent'}">
+                <div class="rank-info">
+                    <span style="width:20px;">${i+1}</span>
+                    <img src="${p.photo}" class="rank-img">
+                    <span style="${p.id === myId ? 'color:var(--primary); font-weight:bold;' : ''}">${p.name}</span>
+                </div>
+                <b>${p.count} Words</b>
+            </div>
+        `).join('');
+        toggleModal('race-result-modal', true);
+    }
+
+    function closeRaceResult() {
+        toggleModal('race-result-modal', false);
+        document.getElementById('race-section').classList.add('hidden');
+        document.getElementById('start-race-btn').classList.remove('hidden');
+        currentGameType = 'practice';
         resetGame();
+    }
+
+    async function triggerRaceStart() { await db.collection("rooms").doc(currentRoomId).update({ status: 'playing' }); }
+    function toggleModal(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
+    function openSettings() { toggleModal('settings-modal', true); document.getElementById('settings-preview').src = document.getElementById('display-avatar').src; }
+    function handleFileSelect(i) { if(i.files[0]) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); } }
+    
+    async function saveSettings() {
+        const saveBtn = document.getElementById('save-btn-ui'); saveBtn.innerText = "กำลังบันทึก..."; saveBtn.disabled = true;
+        const u = auth.currentUser; const newName = document.getElementById('settings-name').value.trim();
+        const file = document.getElementById('avatar-upload').files[0]; let url = document.getElementById('settings-preview').src;
+        try {
+            if(file) { const ref = storage.ref().child(`avatars/${u.uid}_${Date.now()}`); const task = await ref.put(file); url = await task.ref.getDownloadURL(); }
+            const updateObj = { photo: url }; if(newName) updateObj.name = newName;
+            await db.collection("users").doc(u.uid).update(updateObj);
+            ['th', 'en'].forEach(async m => { await db.collection(`leaderboard_${m}`).doc(u.uid).update(updateObj).catch(()=>{}); });
+            await syncUserData(u); toggleModal('settings-modal', false); alert("บันทึกสำเร็จ!");
+        } catch(e) { alert("ล้มเหลว!"); } finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
     }
 
     async function loadLeaderboard() {
@@ -305,96 +415,17 @@
         document.getElementById('lb-mode-name').innerText = modeName;
         const snap = await db.collection(`leaderboard_${currentMode}`).orderBy("wpm", "desc").limit(1000).get();
         let html = ''; let r = 1;
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo}" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`;
-        });
+        snap.forEach(doc => { const d = doc.data(); html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo}" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`; });
         document.getElementById('lb-list-main').innerHTML = html || '<p style="text-align:center; opacity:0.3">No Data</p>';
     }
 
-    function toggleStatsVisibility() {
-        statsVisible = !statsVisible;
-        document.getElementById('stats-panel').classList.toggle('invisible-stats', !statsVisible);
-    }
-
+    function toggleStatsVisibility() { statsVisible = !statsVisible; document.getElementById('stats-panel').classList.toggle('invisible-stats', !statsVisible); }
     function switchMode(m) { 
-        currentMode = m; currentGameType = 'practice'; 
-        document.getElementById('race-section').classList.add('hidden'); 
+        currentMode = m; currentGameType = 'practice'; document.getElementById('race-section').classList.add('hidden'); 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`btn-${m}`).classList.add('active');
         if(roomUnsub) { roomUnsub(); roomUnsub = null; }
         resetGame(); loadLeaderboard(); 
-    }
-
-    function openRaceLobby() { toggleModal('race-lobby-modal', true); }
-    async function createRaceRoom() {
-        const rid = Math.random().toString(36).substring(7).toUpperCase();
-        const rWords = generateWords(); // ใช้ชุด 100 คำที่สุ่มแบบเดิม
-        const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
-        await db.collection("rooms").doc(rid).set({ status: 'waiting', words: rWords, players: { [u.uid]: { name: d.name, progress: 0, photo: d.photo } } });
-        enterRace(rid);
-    }
-
-    async function joinRaceRoom() {
-        const rid = document.getElementById('join-room-input').value.trim().toUpperCase();
-        if(!rid) return;
-        const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
-        await db.collection("rooms").doc(rid).update({ [`players.${u.uid}`]: { name: d.name, progress: 0, photo: d.photo } });
-        enterRace(rid);
-    }
-
-    function enterRace(rid) {
-        currentRoomId = rid; currentGameType = 'race'; toggleModal('race-lobby-modal', false);
-        document.getElementById('race-section').classList.remove('hidden');
-        document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
-        roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
-            const data = doc.data(); if(!data) return;
-            document.getElementById('race-lanes').innerHTML = Object.keys(data.players).map(pid => `
-                <div style="height:30px; border-bottom:1px dashed #444; position:relative; margin-top:5px;">
-                    <div style="position:absolute; left:${data.players[pid].progress*90}%; transition:0.3s; font-size:12px; display:flex; align-items:center; gap:5px;">
-                        <img src="${data.players[pid].photo}" style="width:18px; height:18px; border-radius:50%;"> 🏎️ ${data.players[pid].name}
-                    </div>
-                </div>`).join('');
-            if(data.status === 'playing' && !isPlaying) { 
-                gameWords = data.words; 
-                document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
-                isPlaying = true; startTimer(); 
-            }
-        });
-    }
-
-    async function triggerRaceStart() { await db.collection("rooms").doc(currentRoomId).update({ status: 'playing' }); }
-    function toggleModal(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
-    function openSettings() { toggleModal('settings-modal', true); document.getElementById('settings-preview').src = document.getElementById('display-avatar').src; }
-    function handleFileSelect(i) { if(i.files[0]) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); } }
-
-    // ระบบอัปโหลดรูปโปรไฟล์
-    async function saveSettings() {
-        const saveBtn = document.getElementById('save-btn-ui');
-        saveBtn.innerText = "กำลังบันทึก..."; saveBtn.disabled = true;
-        const u = auth.currentUser;
-        const newName = document.getElementById('settings-name').value.trim();
-        const file = document.getElementById('avatar-upload').files[0];
-        let url = document.getElementById('settings-preview').src;
-
-        try {
-            if(file) {
-                const ref = storage.ref().child(`avatars/${u.uid}_${Date.now()}`);
-                const task = await ref.put(file);
-                url = await task.ref.getDownloadURL();
-            }
-            const updateObj = { photo: url };
-            if(newName) updateObj.name = newName;
-            await db.collection("users").doc(u.uid).update(updateObj);
-            const modes = ['th', 'en'];
-            for(const m of modes) {
-                await db.collection(`leaderboard_${m}`).doc(u.uid).update(updateObj).catch(() => {});
-            }
-            await syncUserData(u);
-            toggleModal('settings-modal', false);
-            alert("บันทึกข้อมูลเรียบร้อย!");
-        } catch(e) { alert("บันทึกไม่สำเร็จ! ตรวจสอบการเชื่อมต่อ"); }
-        finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
     }
 </script>
 </body>
