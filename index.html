@@ -3,564 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Language Typing Pro ⌨️🌍</title>
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3242/3242202.png">
-    
+    <title>Typing Pro - Ultimate Elite 🏎️</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     
     <style>
-        :root {
-            --primary: #2dd4bf;
-            --secondary: #fb7185;
-            --bg-gradient: linear-gradient(-45deg, #0f172a, #1e1b4b, #2d1b4d, #020617);
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
-            --input-bg: rgba(2, 6, 23, 0.6);
-            --xp-color: #3b82f6;
-            --accent: #a855f7;
-            --border: rgba(255,255,255,0.1);
-            --error-bg: rgba(251, 113, 133, 0.15);
-        }
-
-        body.light-theme {
-            --primary: #0d9488;
-            --secondary: #e11d48;
-            --bg-gradient: linear-gradient(-45deg, #f1f5f9, #e2e8f0, #dee2e6, #f8fafc);
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --text-main: #1e293b;
-            --text-dim: #64748b;
-            --input-bg: rgba(248, 250, 252, 0.8);
-            --xp-color: #2563eb;
-            --accent: #7c3aed;
-            --border: rgba(0,0,0,0.05);
-            --error-bg: rgba(225, 29, 72, 0.1);
-        }
-        
-        body { 
-            font-family: 'Inter', 'Kanit', sans-serif; 
-            background: var(--bg-gradient);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: var(--text-main); 
-            margin: 0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            transition: background 0.3s, color 0.3s; 
-            overflow-x: hidden; 
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .container { width: 100%; max-width: 850px; padding: 20px; z-index: 1; }
-        .card { 
-            background: var(--card-bg); 
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: 32px; 
-            padding: 40px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); 
-            position: relative; 
-        }
-
-        .top-controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 10; }
-        .icon-btn { cursor: pointer; font-size: 18px; background: var(--input-bg); border: 1px solid var(--border); padding: 8px; border-radius: 12px; transition: 0.2s; user-select: none; }
-        .icon-btn:hover { border-color: var(--primary); background: var(--card-bg); }
-
-        .mode-selector { display: flex; background: var(--input-bg); padding: 5px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); gap: 5px; }
-        .mode-btn { flex: 1; padding: 10px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 700; transition: 0.3s; color: var(--text-dim); font-size: 14px; }
-        .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(45, 212, 191, 0.3); }
-
-        .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.15); padding: 12px 20px; border-radius: 24px; border: 1px solid var(--border); }
-        .avatar-container { position: relative; width: 50px; height: 50px; }
-        .user-avatar { width: 100%; height: 100%; border-radius: 14px; object-fit: cover; border: 2px solid var(--primary); background: var(--input-bg); }
-        .lvl-badge { position: absolute; bottom: -5px; right: -5px; background: var(--xp-color); color: white; font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 6px; border: 2px solid var(--card-bg); }
-        
-        .xp-info { flex-grow: 1; margin: 0 15px; }
-        .xp-bar-bg { width: 100%; height: 8px; background: var(--input-bg); border-radius: 10px; margin-top: 5px; overflow: hidden; border: 1px solid var(--border); }
-        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--xp-color), var(--primary)); width: 0%; transition: width 0.6s ease; }
-
-        .stats-panel { position: relative; display: flex; justify-content: space-around; margin-bottom: 15px; background: rgba(0,0,0,0.1); padding: 12px; border-radius: 20px; border: 1px solid var(--border); transition: 0.3s; }
-        .stats-panel.hidden-stats { opacity: 0; height: 0; margin-bottom: 0; padding: 0; transform: translateY(-10px); pointer-events: none; }
-
-        .word-display-container { font-size: 28px; padding: 25px; background: var(--input-bg); border-radius: 22px; margin-bottom: 20px; height: 100px; overflow: hidden; border: 2px solid var(--border); position: relative; line-height: 1.5; user-select: none; }
-        #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 10px 20px; transition: transform 0.2s ease; align-content: flex-start; position: relative; }
-        
-        .word { color: var(--text-dim); transition: 0.1s; white-space: nowrap; border-radius: 4px; padding: 0 4px; border-bottom: 2px solid transparent; }
-        .word.active { color: var(--text-main); background: rgba(255,255,255,0.1); border-bottom-color: var(--primary); }
-        .word.correct { color: var(--primary) !important; }
-        .word.incorrect { color: var(--secondary) !important; text-decoration: underline; }
-        .word.typing-error { color: var(--secondary) !important; background: var(--error-bg); }
-        
-        .input-area { position: relative; display: flex; gap: 10px; }
-        #typing-input { flex: 1; padding: 18px; background: var(--input-bg); border: 2px solid var(--border); border-radius: 18px; font-size: 22px; color: var(--text-main); outline: none; transition: 0.2s; font-family: 'Kanit'; }
-        #typing-input:focus { border-color: var(--primary); background: rgba(0,0,0,0.3); }
-        
-        .reset-btn { width: 60px; background: var(--input-bg); border: 2px solid var(--border); border-radius: 18px; color: var(--text-dim); font-size: 24px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-        .reset-btn:hover { border-color: var(--primary); color: var(--primary); transform: rotate(15deg); }
-
-        .stats-nav { display: flex; gap: 10px; margin-top: 20px; }
-        .stats-btn { flex: 1; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; }
-        .stats-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(12px); }
-        .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 100%; max-width: 500px; text-align: center; border: 1px solid var(--primary); color: #f1f5f9; box-shadow: 0 0 30px rgba(45, 212, 191, 0.2); }
+        :root { --primary: #2dd4bf; --secondary: #fb7185; --bg-gradient: linear-gradient(-45deg, #0f172a, #1e1b4b, #2d1b4d, #020617); --card-bg: rgba(30, 41, 59, 0.7); --text-main: #f1f5f9; --text-dim: #94a3b8; --input-bg: rgba(2, 6, 23, 0.6); --xp-color: #3b82f6; --border: rgba(255,255,255,0.1); }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg-gradient); color: var(--text-main); margin: 0; padding: 40px 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 850px; padding: 20px; }
+        .card { background: var(--card-bg); backdrop-filter: blur(16px); border-radius: 32px; padding: 40px; border: 1px solid var(--border); position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .hidden { display: none !important; }
-        .std-input { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); margin-bottom: 15px; box-sizing: border-box; }
+        .invisible-stats { opacity: 0; pointer-events: none; }
+
+        .profile-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px 25px; border-radius: 24px; border: 1px solid var(--border); }
+        .user-avatar { width: 50px; height: 50px; border-radius: 14px; border: 2px solid var(--primary); object-fit: cover; background: #000; }
+        .xp-bar-bg { width: 100%; height: 8px; background: #000; border-radius: 10px; margin-top: 5px; overflow: hidden; }
+        .xp-bar-fill { height: 100%; background: var(--xp-color); width: 0%; transition: 0.8s; }
+
+        .mode-selector { display: flex; gap: 12px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 14px; background: var(--input-bg); border: 2px solid transparent; border-radius: 18px; cursor: pointer; color: var(--text-dim); transition: 0.3s; text-align: center; font-weight: bold; }
+        .mode-btn.active { border-color: var(--primary); color: white; background: rgba(45, 212, 191, 0.1); box-shadow: 0 0 15px rgba(45, 212, 191, 0.2); }
         
-        #leaderboard-list { margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; max-height: 350px; overflow-y: auto; border: 1px solid var(--border); }
-        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); }
-        .rank-info { display: flex; align-items: center; gap: 12px; }
-        .rank-avatar { width: 35px; height: 35px; border-radius: 8px; border: 1px solid var(--primary); object-fit: cover; }
-        .rank-lvl { font-size: 10px; background: var(--xp-color); color: white; padding: 2px 5px; border-radius: 4px; font-weight: 800; margin-left: 5px; }
+        .word-display-container { font-size: 28px; padding: 25px; background: var(--input-bg); border-radius: 22px; margin-bottom: 20px; height: 100px; overflow: hidden; border: 2px solid var(--border); line-height: 1.6; }
+        #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 10px 20px; transition: 0.2s; }
+        .word { color: var(--text-dim); }
+        .word.active { color: var(--text-main); border-bottom: 3px solid var(--primary); }
+        .word.correct { color: var(--primary); }
+        .word.incorrect { color: var(--secondary); text-decoration: line-through; }
 
-        .best-record-card { background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), #1e1b4b); border: 1px solid var(--primary); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
-        .best-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .best-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; }
+        .std-input { width: 100%; padding: 18px; border-radius: 18px; border: 2px solid var(--border); background: var(--input-bg); color: white; font-size: 20px; outline: none; box-sizing: border-box; text-align: center; transition: 0.3s; }
+        .btn-reset { margin-top: 15px; width: 100%; padding: 14px; border-radius: 18px; border: none; background: linear-gradient(135deg, #1e293b, #334155); color: #94a3b8; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-reset:hover { color: white; transform: translateY(-2px); }
+        .btn-p { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 15px; font-weight: bold; cursor: pointer; width: 100%; }
 
-        button { border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; transition: 0.2s; font-family: 'Kanit'; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
+        .leaderboard-footer { margin-top: 35px; background: rgba(15, 23, 42, 0.4); border-radius: 24px; padding: 25px; border: 1px solid var(--border); }
+        .lb-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; color: var(--primary); font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .lb-scroll { max-height: 400px; overflow-y: auto; }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 10px; border: 1px solid transparent; }
+        .rank-info { display: flex; align-items: center; gap: 15px; }
+        .rank-img { width: 35px; height: 35px; border-radius: 10px; object-fit: cover; }
 
-        .settings-avatar-edit { position: relative; width: 100px; height: 100px; margin: 0 auto 20px; cursor: pointer; }
-        .avatar-preview { width: 100px; height: 100px; border-radius: 20px; border: 3px solid var(--primary); object-fit: cover; }
-        .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); border-radius: 20px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; color: white; font-size: 20px; }
-        .settings-avatar-edit:hover .upload-overlay { opacity: 1; }
-        .rand-avatar-btn { position: absolute; bottom: -5px; right: -5px; background: var(--primary); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1e293b; z-index: 5; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px); }
+        .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 420px; text-align: center; border: 1px solid var(--primary); }
+        
+        .icon-btn { cursor: pointer; background: var(--input-bg); border: 1px solid var(--border); padding: 10px; border-radius: 15px; transition: 0.3s; color: white; }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="auth-ui" class="card">
-            <h2 style="text-align: center; margin-bottom: 30px; letter-spacing: 2px;">🌍 TYPING WORLD RACE</h2>
-            <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้">
-            <input type="password" id="login-pass" class="std-input" placeholder="รหัสผ่าน (6 ตัวขึ้นไป)">
-            <div style="display: flex; gap: 15px;">
-                <button class="btn-ghost" style="flex: 1;" onclick="handleAuth('up')">สมัครใหม่</button>
-                <button class="btn-primary" style="flex: 2;" onclick="handleAuth('in')">เข้าสู่ระบบ</button>
-            </div>
-        </div>
-
-        <div id="game-ui" class="card hidden">
-            <div class="top-controls">
-                <div class="icon-btn" id="toggle-stats-btn" onclick="toggleStatsVisibility()" title="ซ่อน/แสดง สถิติ">👁️</div>
-                <div class="icon-btn" onclick="openSettings()">⚙️</div>
-                <div class="icon-btn" onclick="toggleTheme()">🌓</div>
-            </div>
-            
-            <div class="profile-bar">
-                <div class="avatar-container">
-                    <img id="display-avatar" class="user-avatar" src="">
-                    <div id="display-lvl-badge" class="lvl-badge">LV.1</div>
-                </div>
-                <div class="xp-info">
-                    <div id="display-name" style="font-weight: 800; font-size: 15px; color: var(--primary); text-shadow: 0 0 10px rgba(45, 212, 191, 0.3);">Loading...</div>
-                    <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
-                    <div style="font-size: 10px; color: var(--text-dim); margin-top: 2px;" id="xp-text">0 / 5000 XP</div>
-                </div>
-                <button class="btn-ghost" style="padding: 8px 12px;" onclick="auth.signOut()">🚪</button>
-            </div>
-
-            <div class="mode-selector">
-                <div class="mode-btn active" id="mode-th" onclick="switchMode('th')">🇹🇭 THAI</div>
-                <div class="mode-btn" id="mode-en" onclick="switchMode('en')">🇺🇸 ENGLISH</div>
-            </div>
-
-            <div id="main-stats-panel" class="stats-panel">
-                <div class="stat-item" style="text-align:center"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size: 24px; font-weight: 800; color:var(--secondary)">60s</div></div>
-                <div class="stat-item" style="text-align:center"><small style="color:var(--text-dim)">WPM</small><div id="wpm-live" style="font-size: 24px; font-weight: 800; color:var(--primary)">0</div></div>
-                <div class="stat-item" style="text-align:center"><small style="color:var(--text-dim)">WRONG</small><div id="wrong-live" style="font-size: 24px; font-weight: 800; color:var(--secondary)">0</div></div>
-            </div>
-
-            <div class="word-display-container" id="display-box">
-                <div id="word-list-wrapper"></div>
-            </div>
-            
-            <div class="input-area">
-                <input type="text" id="typing-input" placeholder="เริ่มพิมพ์เพื่อเริ่มเกม..." autocomplete="off">
-                <button class="reset-btn" onclick="resetGame()">↻</button>
-            </div>
-
-            <div class="stats-nav">
-                <button class="stats-btn" onclick="openBestModal()">📊 สถิติสูงสุดของฉัน</button>
-                <button class="stats-btn" onclick="openLeaderboard()">🏆 อันดับโลกโหมดนี้</button>
-            </div>
-        </div>
+<div class="container">
+    <div id="auth-ui" class="card">
+        <h2 style="text-align: center; letter-spacing: 2px; color: var(--primary);">⌨️ TYPING PRO</h2>
+        <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้" style="margin-bottom:15px;">
+        <input type="password" id="login-pass" class="std-input" placeholder="รหัสผ่าน" style="margin-bottom:15px;">
+        <button class="btn-p" onclick="handleAuth('in')">เข้าสู่ระบบ</button>
+        <button onclick="handleAuth('up')" style="background:none; border:none; color:var(--text-dim); width:100%; margin-top:15px; cursor:pointer;">สมัครสมาชิกใหม่</button>
     </div>
 
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>⚙️ ตั้งค่าโปรไฟล์</h3>
-            <div class="settings-avatar-edit" onclick="document.getElementById('avatar-file').click()">
-                <img id="settings-avatar-preview" class="avatar-preview" src="">
-                <div class="upload-overlay">📷</div>
-                <div class="rand-avatar-btn" onclick="event.stopPropagation(); randomizeAvatar()">🎲</div>
+    <div id="game-ui" class="card hidden">
+        <div style="position: absolute; top: 25px; right: 25px; display: flex; gap: 10px;">
+            <div class="icon-btn" onclick="toggleStatsVisibility()" title="เปิด/ปิด สถิติ">👁️</div>
+            <div class="icon-btn" onclick="openSettings()">⚙️</div>
+            <div class="icon-btn" onclick="auth.signOut()">🚪</div>
+        </div>
+
+        <div class="profile-bar">
+            <div style="position:relative">
+                <img id="display-avatar" class="user-avatar" src="">
+                <span id="display-lvl-badge" style="position:absolute; bottom:-5px; right:-5px; background:var(--xp-color); font-size:10px; padding:2px 6px; border-radius:5px; font-weight:bold;">LV.1</span>
             </div>
-            <input type="file" id="avatar-file" hidden accept="image/*" onchange="previewFile()">
-            <input type="text" id="settings-name-input" class="std-input" placeholder="เปลี่ยนชื่อของคุณ">
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-ghost" style="flex: 1;" onclick="toggleModal('settings-modal', false)">ยกเลิก</button>
-                <button id="save-settings-btn" class="btn-primary" style="flex: 2;" onclick="handleSettingsSave()">บันทึก</button>
+            <div style="flex-grow:1; margin-left:20px;">
+                <div id="display-name" style="font-weight:bold; color:var(--primary); font-size:18px;">User</div>
+                <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+                <small id="xp-text" style="font-size:11px; color:var(--text-dim);">0 XP</small>
             </div>
         </div>
-    </div>
 
-    <div id="leaderboard-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>🏆 TOP 100</h3>
-            <div id="leaderboard-list"></div>
-            <button class="btn-primary" style="margin-top:20px" onclick="toggleModal('leaderboard-modal', false)">ปิดหน้าต่าง</button>
+        <div class="mode-selector">
+            <div class="mode-btn active" id="btn-th" onclick="switchMode('th')">🇹🇭 ภาษาไทย</div>
+            <div class="mode-btn" id="btn-en" onclick="switchMode('en')">🇺🇸 English</div>
+            <div class="mode-btn" id="btn-race" onclick="openRaceLobby()">🏎️ โหมดปะลอง</div>
         </div>
-    </div>
 
-    <div id="best-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>📊 สถิติสูงสุดตลอดกาล</h3>
-            <div class="best-record-card"><div style="color:var(--primary); font-weight: 800;">🇹🇭 ภาษาไทย</div><div class="best-grid"><div class="best-box"><small>WPM</small><div id="best-th-wpm">0</div></div><div class="best-box"><small>แม่นยำ</small><div id="best-th-acc">0%</div></div></div></div>
-            <div class="best-record-card" style="border-color: var(--accent);"><div style="color:var(--accent); font-weight: 800;">🇺🇸 ภาษาอังกฤษ</div><div class="best-grid"><div class="best-box"><small>WPM</small><div id="best-en-wpm">0</div></div><div class="best-box"><small>แม่นยำ</small><div id="best-en-acc">0%</div></div></div></div>
-            <button class="btn-primary" onclick="toggleModal('best-modal', false)">กลับไปฝึกซ้อม</button>
-        </div>
-    </div>
-
-    <div id="result-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2 style="color: var(--primary);">FINISHED! 🏁</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-                <div style="background: rgba(0,0,0,0.2); padding:15px; border-radius:15px;"><small>ความเร็ว</small><div id="res-wpm" style="font-size: 28px; font-weight: 800;">0</div>WPM</div>
-                <div style="background: rgba(0,0,0,0.2); padding:15px; border-radius:15px;"><small>แม่นยำ</small><div id="res-acc" style="font-size: 28px; font-weight: 800;">0%</div></div>
+        <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(0,0,0,0.3); padding:20px; border-radius:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span id="room-id-display" style="color:var(--primary); font-weight:bold;">ROOM: -</span>
+                <button class="btn-p" style="width:auto; padding:5px 20px;" onclick="triggerRaceStart()">เริ่มการแข่ง</button>
             </div>
-            <div id="xp-gain-text" style="font-size: 24px; font-weight: 900; color: var(--xp-color); margin-bottom: 20px;">+0 EXP</div>
-            <button class="btn-primary" onclick="closeResult()">ฝึกใหม่อีกครั้ง</button>
+            <div id="race-lanes"></div>
         </div>
-    </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyC4lXsegdu_1H9coMKQNiPWj3Bg2sPxT-0",
-            authDomain: "thaityping-5b95f.firebaseapp.com",
-            projectId: "thaityping-5b95f",
-            storageBucket: "thaityping-5b95f.appspot.com",
-            messagingSenderId: "870492285903",
-            appId: "1:870492285903:web:c85e1c878b6dc699f600ba"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
+        <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px; transition: 0.3s;">
+            <div style="text-align:center;"><small style="color:var(--text-dim)">TIME</small><div id="timer" style="font-size:24px; font-weight:bold; color:var(--secondary);">60s</div></div>
+            <div style="text-align:center;"><small style="color:var(--text-dim)">WPM</small><div id="wpm-live" style="font-size:24px; font-weight:bold; color:var(--primary);">0</div></div>
+            <div style="text-align:center;"><small style="color:var(--text-dim)">WRONG</small><div id="wrong-live" style="font-size:24px; font-weight:bold; color:var(--secondary);">0</div></div>
+        </div>
 
-        const dict = {
-            th: ["กิน", "นอน", "เดิน", "วิ่ง", "ดู", "มา", "ไป","ท่อม","กง", "กรง", "กรม", "กรรม", "กรวย", "กรอง", "กรอด", "กรอบ", "กระจก", "กราบ", "กราม", "กริ่ง", "กรีด", "กรุง", "กรู", "กวาด", "กว้าง", "กบาล", "กบ", "กบฏ", "ก้น", "กอ", "กอง", "กอด", "ก่อน", "กะ", "กัก", "กัน", "กับ", "กาม", "กาย", "กาว", "กำ", "กึ่ง", "กุ้ง", "กุน", "กู", "เก่ง", "เก็บ", "เกร็ง", "เกรง", "เกรส", "เกวียน", "เกศ", "เก๋", "เก้า", "เกาะ", "เกิด", "เกิน", "เกือก", "แกง", "แก้ม", "แก้ว", "แกะ", "ใกล้", "ไกล", "ไก่", "ขน", "ขนม", "ขบ", "ขม", "ขยัน", "ขยับ", "ขรัว", "ขลัง", "ขวาง", "ขว้าง", "ขวา", "ขัง", "ขัด", "ขัน", "ขับ", "ขา", "ขาด", "ขาม", "ขาย", "ขาว", "ขี่", "ขีด", "ขืน", "ขุด", "เข็ม", "เขย", "เขลา", "เขา", "เข้า", "เขียด", "เขียน", "เขียว", "เขื่อน", "แขก", "แข็ง", "แข่ง", "แขน", "ไข่", "ไข้", "คง", "คด", "คน", "คบ", "คม", "ครึ่ง", "ครู", "คลอง", "คลาน", "คล้าย", "คลื่น", "ควร", "ความ", "ควาย", "คว่ำ", "คอ", "คอก", "คอย", "ค่อย", "คะ", "คัด", "คัน", "คับ", "ค่า", "ค้าง", "คาง", "ค่าย", "คาว", "คำ", "คิด", "คิ้ว", "คืน", "คืบ", "คุย", "คุก", "คุณ", "คูณ", "เคย", "เคี้ยว", "เค็ม", "เค้า", "เคาะ", "เคลื่อน", "เคือง", "แคน", "แคบ", "ใคร", "ฆ่า", "งก", "งง", "งด", "งบ", "งม", "งวง", "ง่วง", "งัว", "งัด", "งาน", "งา", "งาม", "ง่าย", "เงย", "เงื่อน", "เงียบ", "เงือก", "เงาะ", "โง่", "จด", "จน", "จบ", "จม", "จอก", "จอง", "จอด", "จอบ", "จะ", "จัก", "จัด", "จัน", "จับ", "จ่าย", "จ้าง", "จาน", "จาม", "จิก", "จิ้ม", "จีน", "จูบ", "จูง", "จุด", "เจ็บ", "เจ็ด", "เจน", "เจียม", "เจียว", "เจาะ", "แจก", "แจง", "แจ่ม", "ใจ", "ฉก", "ฉงน", "ฉด", "ฉบับ", "ฉลาด", "ฉลาม", "ฉีด", "ฉุด", "เฉย", "เฉี่ยว", "แฉะ", "โฉด", "ชก", "ชน", "ชม", "ช่วย", "ชวน", "ช่วง", "ชอบ", "ช้อน", "ชอน", "ชะ", "ชัก", "ชัด", "ชั้น", "ชั่ง", "ชั่ว", "ชา", "ช้าง", "ชาย", "ชาม", "ชิม", "ชิ้น", "ชุด", "ชุม", "เช็ด", "เช่น", "เช่า", "เช้า", "เชือก", "แช่", "โชว์", "โชค", "ซน", "ซบ", "ซวย", "ซอย", "ซ่อม", "ซัก", "ซัด", "ซับ", "ซ้าย", "ซ้ำ", "ซึ้ง", "ซื้อ", "เซ็ง", "แซ่", "โซ่", "ดง", "ดวง", "ดวล", "ดอก", "ดอง", "ดอน", "ดอม", "ดอย", "ดะ", "ดัก", "ดัง", "ดัด", "ดัน", "ดับ", "ดาบ", "ดาม", "ดาว", "ด่า", "ด้าน", "ด้าย", "ดิน", "ดิบ", "ดี", "ดีด", "ดึง", "ดึก", "ดื่ม", "ดื้อ", "ดุ", "ดุม", "ดู", "เด็ด", "เด่น", "เดือด", "เดียว", "เดี่ยว", "แดง", "แดด", "โดน", "โดย", "โดด", "ได้", "ตง", "ตก", "ตด", "ตน", "ตบ", "ตม", "ตรง", "ตรวจ", "ตวง", "ตอง", "ตอม", "ต่อ", "ตัก", "ตั้ง", "ตับ", "ตัว", "ตา", "ตาก", "ต่าง", "ต้าน", "ตาย", "ตาม", "ตำ", "ติ", "ติด", "ตีน", "ตึก", "ตึง", "ตื้อ", "ตุ๊ก", "ตุ่ม", "ตู้", "เตะ", "เต็ม", "เตี้ย", "เตียง", "เตือน", "แตก", "แต่ง", "แตง", "แต้ม", "แตะ", "โต", "โต้", "โต๊ะ", "ใต้", "ถก", "ถด", "ถอน", "ถอย", "ถัง", "ถัก", "ถัด", "ถัน", "ถับ", "ถาม", "ถาด", "ถ่าน", "ถ่าง", "ถ้ำ", "ถูก", "เถียง", "เถา", "เถอะ", "แถบ", "แถว", "ไถ", "ทก", "ทง", "ทน", "ทบ", "ทรวง", "ทราย", "ทรัพย์", "ทอด", "ทอง", "ทอน", "ทับ", "ทัก", "ทาง", "ทาน", "ทาย", "ทาส", "ท้า", "ทำ", "ทิ้ง", "ทิศ", "ทิม", "ที่", "ทุ่ง", "ทุบ", "ทุ่ม", "เท", "เท็จ", "เท่า", "เท้า", "เที่ยง", "เทียน", "เที่ยว", "แทง", "แท่ง", "แทน", "แท้", "ไทย", "นก", "นม", "นวด", "นอน", "นอบ", "นะ", "นัด", "นับ", "นาก", "นาง", "นาน", "นาย", "นา", "น้ำ", "นิ่ง", "นิด", "นิ่ม", "นิว", "นิ้ว", "นึก", "นึ่ง", "นุ่ง", "เนย", "เน่า", "เนียน", "แนว", "แน่", "แน่น", "ใน", "ไหน", "บก", "บง", "บด", "บน", "บวก", "บวช", "บอก", "บอด", "บอน", "บ่อย", "บัด", "บัน", "บับ", "บัง", "บัว", "บ่า", "บาง", "บ้าง", "บาป", "บาน", "บ้าน", "บาย", "บำ", "บิด", "บิน", "บิว", "บีบ", "บึง", "บึ้ง", "บุญ", "บุตร", "เบอร์", "เบลอ", "เบื่อ", "เบี้ยว", "แบก", "แบงก์", "แบ่ง", "แบบ", "แบน", "โบ๋", "ใบ", "ปง", "ปด", "ปลง", "ปลา", "ปลาย", "ปลอม", "ปล่อย", "ปวด", "ปอด", "ป้อน", "ปะ", "ปัก", "ปัง", "ปัด", "ปัน", "ป่า", "ปาง", "ป้าย", "ปาก", "ปาน", "ป้า", "ปาย", "ปีก", "ปืน", "ปู", "เป๊ก", "เป็ด", "เป็น", "เปรม", "เปล", "เปล่า", "เปา", "เป่า", "เป้", "เปีย", "แป้ง", "แปด", "แปะ", "โป้", "ไป", "ผง", "ผด", "ผน", "ผม", "ผล", "ผอม", "ผ่อน", "ผัด", "ผัน", "ผับ", "ผัก", "ผ้า", "ผ่าน", "ผ่าย", "ผาด", "ผิด", "ผิ", "ผิง", "ผิน", "ผิว", "ผี", "ผุด", "ผู้", "เผ็ด", "เผย", "เผา", "แผ่", "แฝด", "ไผ่", "ฝก", "ฝน", "ฝอย", "ฝัง", "ฝัด", "ฝาก", "ฝาด", "ฝ้าย", "ฝึก", "ฝืน", "ฝุ่น", "ฝั่ง", "เฝ้า", "พง", "พจน์", "พ้น", "พบ", "พรม", "พรวน", "พร่อง", "พร้อย", "พวง", "พอ", "พอก", "พอน", "พร", "พัก", "พัด", "พับ", "พัน", "พัง", "พา", "พากย์", "พาด", "พาน", "พาย", "พ่าย", "พำ", "พิง", "พิม", "พิศ", "พี", "พืช", "พุง", "พุ่ง", "พุธ", "เพชร", "เพล", "เพลง", "เพลิน", "เพี้ยน", "เพียง", "เพื่อ", "แพ้", "แพง", "แพร", "แพะ", "โพธิ์", "ฟก", "ฟง", "ฟอง", "ฟอน", "ฟัก", "ฟัด", "ฟัง", "ฟัน", "ฟับ", "ฟาด", "ฟาง", "ฟัน", "ฟิล์ม", "ฟิว", "ฟื้น", "ฟุ้ง", "ฟุต", "ฟู", "เฟิร์น", "แฟน", "แฟบ", "ไฟ", "มก", "มน", "มบ", "ม้วน", "มอง", "มอบ", "มอด", "มะ", "มัก", "มัด", "มัน", "มับ", "มัง", "มา", "มาก", "มาน", "ม่าน", "ม้าย", "ม้า", "ม้าม", "มัด", "มิตร", "มิด", "มี", "มีด", "มึน", "มืด", "มุ้ง", "มุม", "มุด", "เมฆ", "เม็ด", "เมา", "เมิน", "เมีย", "เมือง", "เมื่อ", "แม่", "แม่น", "แมว", "แมลง", "ไม้", "ยก", "ยน", "ยบ", "ยวง", "ยอด", "ยอน", "ยอม", "ย่อย", "ยัก", "ยัง", "ยัด", "ยัน", "ยับ", "ยา", "ย่าง", "ยาก", "ยาม", "ย้าย", "ยาย", "ยำ", "ยิง", "ยิ้ม", "ยีน", "ยืน", "ยืดย", "ยืม", "ยุง", "ยุด", "ยุค", "ยุ้ย", "เย็บ", "เยี่ยว", "เย็น", "เยือน", "แย่", "แยก", "แย่ง", "แย้ม", "โยน", "ใย", "รก", "รน", "รบ", "รวย", "ร่วง", "รวม", "รอง", "รอด", "รอบ", "ระ", "รัก", "รัง", "รัด", "รัน", "รับ", "รา", "ราก", "ราง", "ราช", "ราด", "ร้าน", "ราบ", "รำ", "ริน", "รี", "รีด", "รื่น", "รื้น", "รุก", "รุ้ง", "รุน", "รุม", "รูป", "เรือ", "เรื่อง", "เร่ง", "เร็ว", "เรา", "เร้า", "เรียก", "เรียน", "เรียบ", "เรื่อย", "แรก", "แรง", "แรม", "แรด", "ไร", "ไร่", "ลง", "ลด", "ลน", "ลบ", "ลม", "ลวง", "ลวน", "ลวด", "ลอง", "ลอด", "ลอย", "ละ", "ลัก", "ลัง", "ลัด", "ลัน", "ลับ", "ลา", "ลาก", "ลาง", "ล้าง", "ล้าน", "ลาบ", "ลาม", "ลำ", "ลิง", "ลิ้ม", "ลิตร", "ลิ้น", "ลี", "ลึก", "ลืน", "ลื่น", "ลุย", "ลุง", "เลน", "เล่น", "เลข", "เลว", "เลิก", "เลีย", "เลือก", "เลื่อน", "แล", "แลก", "และ", "แล้ว", "แล้ง", "โล่", "โลก", "โล่ง", "ไว", "วง", "วช", "วน", "วพ", "วอล", "วอน", "วอด", "วะ", "วัก", "วัง", "วัด", "วัน", "วับ", "วา", "วาด", "ว่าง", "วาน", "วาย", "ว่า", "วิก", "วิง", "วิน", "วิว", "วี", "วุ้น", "วูบ", "เวท", "เวน", "เวร", "เว้น", "แวะ", "ไว้", "ศพ", "ศร", "ศาล", "ศิษย์", "ศุกร์", "เศษ", "เสา", "ส่ง", "สด", "สบ", "สม", "สวม", "สวย", "สวด", "สวน", "สอบ", "สอย", "สะ", "สัก", "สั่ง", "สัน", "สับ", "สา", "สาด", "สาน", "สาย", "สาว", "สาป", "สาม", "สิ", "สิก", "สิง", "สิบ", "สิม", "สิว", "สี", "สืบ", "สื่อ", "สุก", "สุง", "สุ่ม", "สู้", "สูบ", "สูง", "สูน", "เสก", "เส้น", "เสร็จ", "เสพ", "เสือ", "เสื่อ", "เสี้ยน", "เสีย", "เสียง", "แสบ", "แสน", "แสง", "แส้", "ใส", "ไส้", "สี่", "หก", "หงส์", "หด", "หน", "หมวย", "หมวด", "หมอบ", "หอม", "ห้อย", "หะ", "หัก", "หัง", "หัด", "หัน", "หับ", "หา", "หาง", "ห่าง", "หาด", "หาน", "หาย", "ห้าม", "ห้า", "ห่ำ", "หิน", "หิว", "หิ้ว", "หิม", "หีบ", "หึง", "หืด", "หื่น", "หุบ", "หุ่น", "หุ้น", "หู", "เหงา", "เห็ด", "เหตุ", "เหรัญ", "เหว", "เห่า", "เหยียบ", "เหยื่อ", "เหรียญ", "แห้ง", "แหง", "แหวน", "แห่", "แหก", "ไห", "ไหน", "ไหว้", "อก", "อด", "อน", "อบ", "อม", "อวย", "อวด", "อวบ", "อ้วก", "ออม", "อ้อย", "อะ", "อัก", "อัง", "อัด", "อัน", "อับ", "อา", "อาง", "อ่าง", "อาจ", "อ่าน", "อาบ", "อาม", "อาย", "อ้าม", "อิ", "อิก", "อิง", "อิม", "อิ่ม", "อี", "อีก", "อึด", "อึ้ง", "อืด", "อุ", "อุด", "อุบล", "อูม", "อูฐ", "อู๋", "เอดส์", "เอว", "เอ็น", "เอ่ย", "เอื้อ", "เอียง", "เอี๊ยด", "เอี่ยม", "แอก", "แอบ", "แอพ", "แอ้ม", "โอ้", "โอ่ง", "ไอ", "ป้อม", "ค่อม", "อ๋อม", "จ๋อม", "อ๋อย", "ปอย", "กอย", "คอย", "ลอย", "หอย", "จอย", "จริง", "เท็จ", "เป็ด", "ไพลิน", "นอน", "โกง", "ดี", "ใจ", "มือ", "ตา", "หู", "น้ำ", "รัก", "บ้าน", "รถ", "คน", "มด", "เรียน", "เล่น", "สวย", "รวย", "เรา", "เธอ", "เขา", "ใน", "นอก", "แปรง", "เขียน", "อ่าน", "ฟัง", "ชาม", "แก้ว", "จาน", "ดิน", "ลม", "ฝน", "ฟ้า", "ขาว", "ดำ", "แดง", "เขียว", "ทอง", "เงิน", "งาน", "พัก", "ผ่อน", "ยิ้ม", "หมู", "หมา", "แมว", "ม้า", "ปลา", "ไม้", "ไก่", "ไข่", "น้า", "อา", "ป้า", "ลุง", "แม่", "พ่อ", "พี่", "น้อง", "คุณ", "แขน", "ขา", "เอว", "ท้อง", "ฟัน", "ปาก", "จมูก", "แก้ม", "ผม", "ทำงาน", "ขยัน", "ร่าเริง", "สดใส", "ต้นไม้", "ภูเขา", "ทะเล", "อาหาร", "ขนม", "สะอาด", "ท้องฟ้า", "กะเพรา", "มะม่วง", "ปากกา", "สมุด", "ดินสอ", "เก้าอี้", "รองเท้า", "ถุงเท้า", "นาฬิกา", "มือถือ", "น้ำหวาน", "กาแฟ", "ส้มตำ", "โรงเรียน", "ตลาด", "ความสุข", "จริงใจ", "อดทน", "ใจดี", "ก้าวหน้า", "ชีวิต"],
-            en: ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "work", "play", "love", "game", "fire", "water", "earth", "wind", "blue", "red", "green", "bird", "fish", "small", "large", "ready", "start", "code", "best", "cool", "now", "here", "there", "some", "more", "last", "next", "page", "text", "font", "size", "dark", "light", "home", "back", "show", "hide", "save", "edit", "user", "name", "pass", "file", "web", "app", "site", "link", "bold", "time", "date", "year", "day", "way", "car", "bus", "ship", "road", "sky", "moon", "star", "sun", "tree", "leaf", "root", "seed", "wall", "door", "room", "key", "box", "bag", "cup", "pen", "book", "boy", "girl", "man", "kid", "son", "old", "new", "low", "high", "active", "bright", "forest", "mountain", "ocean", "happy", "dinner", "morning", "evening", "flower", "winter", "summer", "weather", "stable", "school", "office", "laptop", "mobile", "coffee", "sugar", "market", "leader", "member", "people", "future"]
-        };
-
-        let currentMode = 'th', timer = null, timeLeft = 60, isPlaying = false, gameStarted = false;
-        let correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [], userXP = 0;
-        let myBest = { th: { wpm: 0, acc: 0 }, en: { wpm: 0, acc: 0 } };
-        let statsVisible = true;
-
-        function getLevel(xp) { return Math.floor(Math.sqrt(xp / 5000)) + 1; }
-        function getXPForLevel(lvl) { return Math.pow(lvl - 1, 2) * 5000; }
-        function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
-        function toggleTheme() { document.body.classList.toggle('light-theme'); }
-
-        function toggleStatsVisibility() {
-            statsVisible = !statsVisible;
-            const panel = document.getElementById('main-stats-panel');
-            const btn = document.getElementById('toggle-stats-btn');
-            if(statsVisible) {
-                panel.classList.remove('hidden-stats');
-                btn.innerText = '👁️';
-            } else {
-                panel.classList.add('hidden-stats');
-                btn.innerText = '🙈';
-            }
-        }
-
-        function generateWords() {
-            gameWords = [];
-            const list = dict[currentMode];
-            for(let i=0; i<300; i++) gameWords.push(list[Math.floor(Math.random() * list.length)]);
-            document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
-            document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
-            updateHighlight();
-        }
-
-        function resetGame() {
-            clearInterval(timer); timer = null; isPlaying = false; gameStarted = false; timeLeft = 60;
-            correctWords = 0; wrongWords = 0; currentWordIndex = 0;
-            const input = document.getElementById('typing-input');
-            document.getElementById('timer').innerText = "60s";
-            document.getElementById('wpm-live').innerText = "0";
-            document.getElementById('wrong-live').innerText = "0";
-            input.value = ""; input.focus();
-            generateWords();
-        }
-
-        function startTimer() {
-            gameStarted = true; isPlaying = true;
-            timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').innerText = timeLeft + "s";
-                if(timeLeft <= 0) endGame();
-            }, 1000);
-        }
-
-        document.getElementById('typing-input').addEventListener('input', (e) => {
-            if(!isPlaying && gameStarted) return;
-            const inputVal = e.target.value;
-            if(!gameStarted && inputVal.length > 0) startTimer();
-
-            const targetWord = gameWords[currentWordIndex];
-            const currentWordEl = document.getElementById(`w-${currentWordIndex}`);
-
-            if(inputVal.endsWith(' ')) {
-                const typed = inputVal.trim();
-                if(typed === "") { e.target.value = ''; return; }
-                
-                currentWordEl.classList.remove('typing-error');
-                if(typed === targetWord) {
-                    correctWords++; currentWordEl.classList.add('correct');
-                } else {
-                    wrongWords++; currentWordEl.classList.add('incorrect');
-                }
-                
-                currentWordIndex++;
-                document.getElementById('wpm-live').innerText = correctWords;
-                document.getElementById('wrong-live').innerText = wrongWords;
-                e.target.value = '';
-                updateHighlight();
-                return;
-            }
-
-            if (inputVal.length > 0) {
-                if (!targetWord.startsWith(inputVal)) {
-                    currentWordEl.classList.add('typing-error');
-                } else {
-                    currentWordEl.classList.remove('typing-error');
-                }
-            } else {
-                currentWordEl.classList.remove('typing-error');
-            }
-        });
-
-        function updateHighlight() {
-            document.querySelectorAll('.word').forEach(el => el.classList.remove('active'));
-            const cur = document.getElementById(`w-${currentWordIndex}`);
-            if(cur) {
-                cur.classList.add('active');
-                const wrapper = document.getElementById('word-list-wrapper');
-                if (cur.offsetTop > 40) wrapper.style.transform = `translateY(-${cur.offsetTop - 10}px)`;
-            }
-        }
-
-        async function endGame() {
-            isPlaying = false; clearInterval(timer);
-            const total = correctWords + wrongWords;
-            const accuracy = total > 0 ? Math.round((correctWords / total) * 100) : 0;
-            const xpGain = Math.max(1, Math.round((correctWords * (accuracy/100)) * 0.5));
-
-            document.getElementById('res-wpm').innerText = correctWords;
-            document.getElementById('res-acc').innerText = accuracy + "%";
-            document.getElementById('xp-gain-text').innerText = `+${xpGain} EXP`;
-            toggleModal('result-modal', true);
-
-            const user = auth.currentUser;
-            if(user) {
-                const userRef = db.collection("users").doc(user.uid);
-                const userDoc = await userRef.get();
-                const userData = userDoc.data() || {};
-                
-                // Update Best Record
-                let updatedBest = userData.best || { th: { wpm: 0, acc: 0 }, en: { wpm: 0, acc: 0 } };
-                if(correctWords > (updatedBest[currentMode]?.wpm || 0)) {
-                    updatedBest[currentMode] = { wpm: correctWords, acc: accuracy };
-                }
-
-                const newXP = (userData.xp || 0) + xpGain;
-                
-                // Save to User Doc
-                await userRef.set({ 
-                    best: updatedBest, 
-                    xp: newXP 
-                }, { merge: true });
-
-                // Save to Leaderboard
-                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({
-                    name: userData.name || "Anonymous",
-                    wpm: updatedBest[currentMode].wpm,
-                    xp: newXP, 
-                    photo: userData.photo || ""
-                }, { merge: true });
-
-                updateUIFromDB(user);
-            }
-        }
-
-        async function updateUIFromDB(user) {
-            const doc = await db.collection("users").doc(user.uid).get();
-            if(!doc.exists) return;
-            const data = doc.data();
-            userXP = data.xp || 0;
-            myBest = data.best || { th: { wpm: 0, acc: 0 }, en: { wpm: 0, acc: 0 } };
-            
-            document.getElementById('display-name').innerText = data.name || "User";
-            document.getElementById('display-avatar').src = data.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
-            
-            const lv = getLevel(userXP);
-            const nextXP = getXPForLevel(lv + 1);
-            const currXP = getXPForLevel(lv);
-            
-            document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
-            document.getElementById('xp-fill').style.width = `${((userXP - currXP) / (nextXP - currXP)) * 100}%`;
-            document.getElementById('xp-text').innerText = `${Math.floor(userXP).toLocaleString()} / ${nextXP.toLocaleString()} XP`;
-        }
-
-        function openSettings() {
-            const user = auth.currentUser;
-            if(!user) return;
-            db.collection("users").doc(user.uid).get().then(doc => {
-                const data = doc.data() || {};
-                document.getElementById('settings-name-input').value = data.name || "";
-                document.getElementById('settings-avatar-preview').src = data.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
-                toggleModal('settings-modal', true);
-            });
-        }
-
-        function randomizeAvatar() {
-            const rand = Math.random().toString(36).substring(7);
-            const newUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${rand}`;
-            document.getElementById('settings-avatar-preview').src = newUrl;
-        }
-
-        function previewFile() {
-            const file = document.getElementById('avatar-file').files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => document.getElementById('settings-avatar-preview').src = reader.result;
-            reader.readAsDataURL(file);
-        }
-
-        async function handleSettingsSave() {
-            const btn = document.getElementById('save-settings-btn');
-            const user = auth.currentUser;
-            const newName = document.getElementById('settings-name-input').value.trim();
-            const previewSrc = document.getElementById('settings-avatar-preview').src;
-            const file = document.getElementById('avatar-file').files[0];
-
-            if(!newName) return alert("กรุณาใส่ชื่อ");
-            btn.disabled = true; btn.innerText = "กำลังบันทึก...";
-            
-            try {
-                let finalPhotoUrl = previewSrc;
-                if (file) {
-                    const ref = storage.ref(`avatars/${user.uid}`);
-                    await ref.put(file);
-                    finalPhotoUrl = await ref.getDownloadURL();
-                }
-
-                const updateData = { name: newName, photo: finalPhotoUrl };
-                await db.collection("users").doc(user.uid).update(updateData);
-                
-                // Update Leaderboards too
-                await db.collection("leaderboard_th").doc(user.uid).set(updateData, {merge:true});
-                await db.collection("leaderboard_en").doc(user.uid).set(updateData, {merge:true});
-
-                updateUIFromDB(user);
-                toggleModal('settings-modal', false);
-            } catch(e) {
-                alert("เกิดข้อผิดพลาดในการบันทึก");
-            } finally {
-                btn.disabled = false; btn.innerText = "บันทึก";
-            }
-        }
-
-        function closeResult() { toggleModal('result-modal', false); resetGame(); }
-        function switchMode(mode) { if(isPlaying) return; currentMode = mode; document.getElementById('mode-th').classList.toggle('active', mode === 'th'); document.getElementById('mode-en').classList.toggle('active', mode === 'en'); resetGame(); }
+        <div class="word-display-container"><div id="word-list-wrapper"></div></div>
+        <input type="text" id="typing-input" class="std-input" placeholder="เริ่มพิมพ์ที่นี่..." autocomplete="off">
         
-        function openBestModal() { 
-            document.getElementById('best-th-wpm').innerText = myBest.th.wpm || 0; 
-            document.getElementById('best-th-acc').innerText = (myBest.th.acc || 0) + "%";
-            document.getElementById('best-en-wpm').innerText = myBest.en.wpm || 0;
-            document.getElementById('best-en-acc').innerText = (myBest.en.acc || 0) + "%";
-            toggleModal('best-modal', true); 
+        <button class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มคำศัพท์ใหม่ (1,000 คำ)</button>
+
+        <div class="leaderboard-footer">
+            <div class="lb-title">
+                <span>🏆 อันดับสูงสุด (TOP 1000)</span>
+                <span id="lb-mode-name" style="font-size:14px; opacity:0.7;">ภาษาไทย</span>
+            </div>
+            <div class="lb-scroll" id="lb-list-main"></div>
+        </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>⚙️ ตั้งค่าโปรไฟล์</h3>
+        <img id="settings-preview" class="user-avatar" style="width:100px; height:100px; margin-bottom:20px;" src="">
+        <input type="file" id="avatar-upload" hidden onchange="handleFileSelect(this)">
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button class="btn-p" style="background:#475569" onclick="document.getElementById('avatar-upload').click()">เลือกรูปภาพ</button>
+            <button class="btn-p" onclick="saveSettings()">บันทึกข้อมูล</button>
+        </div>
+        <input type="text" id="settings-name" class="std-input" placeholder="เปลี่ยนชื่อเล่น">
+        <button onclick="toggleModal('settings-modal', false)" style="margin-top:15px; background:none; border:none; color:white; cursor:pointer;">ยกเลิก</button>
+    </div>
+</div>
+
+<div id="race-lobby-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>🏎️ โหมดปะลอง (100 คำ ไทยล้วน)</h3>
+        <button class="btn-p" onclick="createRaceRoom()" style="margin-bottom:15px;">สร้างห้องใหม่</button>
+        <input type="text" id="join-room-input" class="std-input" placeholder="รหัสห้อง">
+        <button class="btn-p" onclick="joinRaceRoom()" style="margin-top:10px;">เข้าร่วมห้อง</button>
+        <button onclick="toggleModal('race-lobby-modal', false)" style="margin-top:20px; background:none; border:none; color:white; cursor:pointer;">กลับ</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4lXsegdu_1H9coMKQNiPWj3Bg2sPxT-0",
+        authDomain: "thaityping-5b95f.firebaseapp.com",
+        projectId: "thaityping-5b95f",
+        storageBucket: "thaityping-5b95f.appspot.com",
+        messagingSenderId: "870492285903",
+        appId: "1:870492285903:web:c85e1c878b6dc699f600ba"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
+
+    // คลังคำศัพท์ภาษาไทย (1 พยางค์ และ 2 พยางค์)
+    const th_1 = ["กอ", "ขอ", "คอ", "งอ", "จอ", "ดอ", "ตอ", "บอ", "ปอ", "รอ", "ลอ", "วอ", "สอ", "หอ", "ออ", "กา", "มา", "นา", "ตา", "พา", "ลา", "หา", "ยา", "ฝา", "ทา", "รำ", "ทำ", "นำ", "จำ", "ดำ", "ดี", "ตี", "นี", "มี", "ปี", "รี", "สี", "ใจ", "ใน", "ไป", "ไว", "ใส", "ใฝ่", "ได้", "ให้", "ใช้", "คน", "มัน", "กิน", "นอน", "รัก", "เดิน", "ดู", "ปู", "หู", "รู้", "สู้", "กู้", "พบ", "จบ", "หลบ", "รบ", "ตบ", "นก", "ตก", "อก", "พก", "ยก", "กด", "จด", "ลด", "สด", "อด", "มด", "บน", "พ้น", "ต้น", "คน", "ทน", "ชน", "จน", "สน", "ลม", "ดม", "จม", "กลม", "สม", "อม", "ผม", "พร", "จร", "สอน", "ตอน", "ขอน", "นอน", "วอน", "ฟ้อน", "ร้อน"];
+    const th_2 = ["บ้าน", "ข้าว", "น้ำ", "รถ", "สวย", "เรียน", "เพื่อน", "พี่", "น้อง", "ป้า", "น้า", "อา", "ปู่", "ย่า", "ตา", "ยาย", "คุณ", "เธอ", "เขา", "เรา", "มัน", "ใคร", "ไหน", "เมื่อ", "แต่", "และ", "เพราะ", "ถึง", "ถ้า", "จึง", "งาน", "เงิน", "ทอง", "รวย", "จน", "แข็ง", "อ่อน", "เร็ว", "ช้า", "สูง", "ต่ำ", "ดำ", "ขาว", "รัก", "หลง", "โกรธ", "เกลียด", "คิด", "เขียน", "อ่าน", "ฟัง", "ถาม", "ตอบ", "ขอบคุณ", "ยินดี", "ขอโทษ", "สวัสดี", "ลาไป", "มาหา", "ใจดี", "ใจดำ", "ไฟฟ้", "หน้าตา", "ท้องฟ้า", "ก้อนเมฆ", "น้ำใจ", "หนังสือ", "ปากกา", "โต๊ะเรียน", "เก้าอี้"];
+    const en_pool = ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "coding", "javascript", "typing", "speed", "test", "world", "future", "system", "logic", "create", "think", "build", "pixel", "power", "keyboard", "screen", "mouse", "click", "data", "base", "cloud", "server", "web", "site"];
+    
+    let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
+    let timer = null, timeLeft = 60, correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
+    let userXP = 0, currentRoomId = null, roomUnsub = null;
+
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            document.getElementById('auth-ui').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+            syncUserData(user); loadLeaderboard(); resetGame();
+        } else {
+            document.getElementById('auth-ui').classList.remove('hidden');
+            document.getElementById('game-ui').classList.add('hidden');
         }
+    });
 
-        async function openLeaderboard() {
-            toggleModal('leaderboard-modal', true);
-            const listEl = document.getElementById('leaderboard-list');
-            listEl.innerHTML = '<div style="padding:20px;">กำลังโหลด...</div>';
-            try {
-                const snap = await db.collection(`leaderboard_${currentMode}`).orderBy("wpm", "desc").limit(100).get();
-                let html = ''; let i = 1;
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    html += `<div class="rank-item"><div class="rank-info"><b>${i++}.</b><img class="rank-avatar" src="${d.photo || 'https://api.dicebear.com/7.x/bottts/svg?seed='+doc.id}"><div style="font-size:14px;">${d.name} <span class="rank-lvl">LV.${getLevel(d.xp || 0)}</span></div></div><div style="color:var(--primary); font-weight:800;">${d.wpm} WPM</div></div>`;
-                });
-                listEl.innerHTML = html || '<div style="padding:20px;">ไม่มีข้อมูล</div>';
-            } catch(e) {
-                listEl.innerHTML = '<div style="padding:20px;">โหลดข้อมูลไม่สำเร็จ</div>';
-            }
-        }
+    async function handleAuth(type) {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value;
+        if(!u || p.length < 6) return alert("ข้อมูลไม่ถูกต้อง");
+        const email = btoa(unescape(encodeURIComponent(u))).replace(/=/g, "") + "@typing.com";
+        try {
+            if(type === 'up') {
+                const res = await auth.createUserWithEmailAndPassword(email, p);
+                const robotAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`;
+                await db.collection("users").doc(res.user.uid).set({ name: u, xp: 0, photo: robotAvatar, best: { th: 0, en: 0 } });
+            } else await auth.signInWithEmailAndPassword(email, p);
+        } catch(e) { alert("Error!"); }
+    }
 
-        // AUTH CORE LOGIC (FIXED)
-        auth.onAuthStateChanged(user => {
-            if(user) {
-                toggleModal('auth-ui', false); 
-                document.getElementById('game-ui').classList.remove('hidden');
-                updateUIFromDB(user); 
-                resetGame();
-            } else {
-                toggleModal('auth-ui', true); 
-                document.getElementById('game-ui').classList.add('hidden');
-            }
-        });
+    async function syncUserData(user) {
+        const doc = await db.collection("users").doc(user.uid).get();
+        if(!doc.exists) return;
+        const data = doc.data();
+        userXP = data.xp || 0;
+        document.getElementById('display-name').innerText = data.name;
+        document.getElementById('display-avatar').src = data.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+        const lv = Math.floor(Math.sqrt(userXP / 5000)) + 1;
+        document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
+        document.getElementById('xp-fill').style.width = `${((userXP % 5000) / 5000) * 100}%`;
+        document.getElementById('xp-text').innerText = `${userXP.toLocaleString()} XP`;
+    }
 
-        async function handleAuth(type) {
-            const u = document.getElementById('login-user').value.trim();
-            const p = document.getElementById('login-pass').value;
-            if(u.length < 2 || p.length < 6) return alert("ชื่อต้องมี 2 ตัวขึ้นไป, รหัส 6 ตัวขึ้นไป");
-            
-            // Create a consistent email from username (No substring to prevent collisions)
-            const encodedUser = btoa(unescape(encodeURIComponent(u))).replace(/=/g, "");
-            const email = `${encodedUser}@typingrace.com`;
-
-            try {
-                if(type === 'up') {
-                    // Sign Up
-                    const res = await auth.createUserWithEmailAndPassword(email, p);
-                    await db.collection("users").doc(res.user.uid).set({ 
-                        name: u, 
-                        xp: 0, 
-                        photo: `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`, 
-                        best: { th:{wpm:0,acc:0}, en:{wpm:0,acc:0} } 
-                    });
-                    alert("สมัครสมาชิกสำเร็จ!");
+    // ฟังก์ชันสุ่มตามกฎ 1 พยางค์ (10 คำ) : 2 พยางค์ (1 คำ)
+    function generateWords() {
+        const count = (currentGameType === 'race') ? 100 : 1000;
+        let pool = [];
+        
+        if (currentMode === 'th') {
+            for (let i = 0; i < count; i++) {
+                // กฎ: 10 คำแรก (0-9) เป็น 1 พยางค์, คำที่ 11 (10) เป็น 2 พยางค์
+                if (i % 11 === 10) {
+                    pool.push(th_2[Math.floor(Math.random() * th_2.length)]);
                 } else {
-                    // Sign In
-                    await auth.signInWithEmailAndPassword(email, p);
+                    pool.push(th_1[Math.floor(Math.random() * th_1.length)]);
                 }
-            } catch(e) {
-                console.error(e);
-                if(e.code === "auth/email-already-in-use") alert("ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว");
-                else if(e.code === "auth/wrong-password") alert("รหัสผ่านไม่ถูกต้อง");
-                else if(e.code === "auth/user-not-found") alert("ไม่พบชื่อผู้ใช้นี้ (ถ้ายังไม่มีให้กดสมัครใหม่)");
-                else alert("เข้าสู่ระบบไม่สำเร็จ: " + e.message);
+            }
+        } else {
+            for (let i = 0; i < count; i++) {
+                pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
             }
         }
+        return pool;
+    }
 
-        window.addEventListener('keydown', (e) => { 
-            if(e.key === 'Escape') resetGame(); 
+    function resetGame() {
+        clearInterval(timer); isPlaying = false; timeLeft = 60;
+        correctWords = 0; wrongWords = 0; currentWordIndex = 0;
+        document.getElementById('timer').innerText = "60s";
+        document.getElementById('wpm-live').innerText = "0";
+        document.getElementById('wrong-live').innerText = "0";
+        document.getElementById('typing-input').value = "";
+        document.getElementById('typing-input').disabled = false;
+        
+        gameWords = generateWords();
+        
+        document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
+        document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
+        updateHighlight();
+    }
+
+    function updateHighlight() {
+        document.querySelectorAll('.word').forEach(el => el.classList.remove('active'));
+        const cur = document.getElementById(`w-${currentWordIndex}`);
+        if(cur) {
+            cur.classList.add('active');
+            if (cur.offsetTop > 45) document.getElementById('word-list-wrapper').style.transform = `translateY(-${cur.offsetTop - 10}px)`;
+        }
+    }
+
+    document.getElementById('typing-input').addEventListener('input', (e) => {
+        if(!isPlaying && currentGameType === 'practice') { isPlaying = true; startTimer(); }
+        const val = e.target.value;
+        if(val.endsWith(' ')) {
+            const typed = val.trim();
+            if(typed === gameWords[currentWordIndex]) { correctWords++; document.getElementById(`w-${currentWordIndex}`).classList.add('correct'); }
+            else { wrongWords++; document.getElementById(`w-${currentWordIndex}`).classList.add('incorrect'); }
+            currentWordIndex++; e.target.value = '';
+            document.getElementById('wpm-live').innerText = correctWords;
+            document.getElementById('wrong-live').innerText = wrongWords;
+            updateHighlight();
+            if(currentGameType === 'race') db.collection("rooms").doc(currentRoomId).update({ [`players.${auth.currentUser.uid}.progress`]: currentWordIndex / gameWords.length });
+        }
+    });
+
+    function startTimer() { timer = setInterval(() => { timeLeft--; document.getElementById('timer').innerText = timeLeft + "s"; if(timeLeft <= 0) endGame(); }, 1000); }
+
+    async function endGame() {
+        isPlaying = false; clearInterval(timer);
+        const user = auth.currentUser;
+        if(user) {
+            const doc = await db.collection("users").doc(user.uid).get();
+            const data = doc.data();
+            if(currentGameType === 'practice' && correctWords > (data.best?.[currentMode] || 0)) {
+                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo }, {merge: true});
+                let newBest = data.best || { th: 0, en: 0 };
+                newBest[currentMode] = correctWords;
+                await db.collection("users").doc(user.uid).update({ best: newBest });
+            }
+            await db.collection("users").doc(user.uid).update({ xp: (data.xp || 0) + (correctWords * 2) });
+            syncUserData(user); loadLeaderboard();
+        }
+        alert(`Finished! WPM: ${correctWords}`);
+        resetGame();
+    }
+
+    async function loadLeaderboard() {
+        document.getElementById('lb-mode-name').innerText = currentMode === 'th' ? "ภาษาไทย" : "English";
+        const snap = await db.collection(`leaderboard_${currentMode}`).orderBy("wpm", "desc").limit(1000).get();
+        let html = ''; let r = 1;
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo}" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`;
         });
-    </script>
+        document.getElementById('lb-list-main').innerHTML = html || 'No Data';
+    }
+
+    function toggleStatsVisibility() {
+        statsVisible = !statsVisible;
+        document.getElementById('stats-panel').classList.toggle('invisible-stats', !statsVisible);
+    }
+
+    function switchMode(m) { 
+        currentMode = m; currentGameType = 'practice'; 
+        document.getElementById('race-section').classList.add('hidden'); 
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btn-${m}`).classList.add('active');
+        resetGame(); loadLeaderboard(); if(roomUnsub) roomUnsub(); 
+    }
+
+    function openRaceLobby() { toggleModal('race-lobby-modal', true); }
+    async function createRaceRoom() {
+        const rid = Math.random().toString(36).substring(7).toUpperCase();
+        const rWords = [];
+        // โหมดปะลองสุ่มแบบเดียวกัน
+        for (let i = 0; i < 100; i++) {
+            if (i % 11 === 10) rWords.push(th_2[Math.floor(Math.random() * th_2.length)]);
+            else rWords.push(th_1[Math.floor(Math.random() * th_1.length)]);
+        }
+        const u = auth.currentUser; const d = (await db.collection("users").doc(u.uid).get()).data();
+        await db.collection("rooms").doc(rid).set({ status: 'waiting', words: rWords, players: { [u.uid]: { name: d.name, progress: 0, photo: d.photo } } });
+        enterRace(rid);
+    }
+    function enterRace(rid) {
+        currentRoomId = rid; currentGameType = 'race'; toggleModal('race-lobby-modal', false);
+        document.getElementById('race-section').classList.remove('hidden');
+        document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-race').classList.add('active');
+        roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
+            const data = doc.data(); if(!data) return;
+            document.getElementById('race-lanes').innerHTML = Object.keys(data.players).map(pid => `
+                <div style="height:30px; border-bottom:1px dashed #444; position:relative; margin-top:5px;">
+                    <div style="position:absolute; left:${data.players[pid].progress*90}%; transition:0.3s; font-size:12px;">🏎️ ${data.players[pid].name}</div>
+                </div>`).join('');
+            if(data.status === 'playing' && !isPlaying) { gameWords = data.words; renderRaceWords(); isPlaying = true; startTimer(); }
+        });
+    }
+    function renderRaceWords() {
+        document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
+        updateHighlight();
+    }
+    async function triggerRaceStart() { await db.collection("rooms").doc(currentRoomId).update({ status: 'playing' }); }
+    function toggleModal(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
+    function openSettings() { toggleModal('settings-modal', true); }
+    function handleFileSelect(i) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); }
+    async function saveSettings() {
+        const u = auth.currentUser; const name = document.getElementById('settings-name').value.trim();
+        const file = document.getElementById('avatar-upload').files[0];
+        let url = document.getElementById('settings-preview').src;
+        if(file) { const ref = storage.ref(`avatars/${u.uid}`); await ref.put(file); url = await ref.getDownloadURL(); }
+        await db.collection("users").doc(u.uid).update({ name: name || u.uid, photo: url });
+        syncUserData(u); toggleModal('settings-modal', false);
+    }
+</script>
 </body>
 </html>
