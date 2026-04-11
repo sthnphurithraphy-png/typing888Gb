@@ -184,11 +184,8 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
 
-    // ชุดคำศัพท์ 1 พยางค์
     const th_1_syl = ["ไป", "มา", "ดี", "สวย", "รัก", "มาก", "ทำ", "กิน", "ดู", "ใจ", "ใน", "น้ำ", "รถ", "บ้าน", "นก", "แมว", "ครู", "พ่อ", "แม่", "พี่", "น้อง", "ฟ้า", "ลม", "ฝน", "ไฟ", "ดิน", "หิน", "จาน", "ชาม", "โต๊ะ", "หมู", "ไก่", "ปลา", "กุ้ง", "หอย", "ปู", "มด", "ลิง", "เสือ", "งู", "ไม้", "ดอก", "บาน", "เดิน", "นอน", "ยืน", "นิ่ง", "หอม", "ขาว", "ดำ", "แดง"];
-    // ชุดคำศัพท์ 2 พยางค์
     const th_2_syl = ["กินข้าว", "นอนหลับ", "ทำงาน", "ดีใจ", "น้ำใจ", "ท้องฟ้า", "น้ำดื่ม", "เดินเล่น", "ต้นไม้", "ปลาทู", "รถยนต์", "คนไทย", "หน้าต่าง", "หนังสือ", "ปากกา", "แม่ค้า", "ตลาด", "น้ำส้ม", "รองเท้า", "เสื้อผ้า", "ดอกไม้", "วันนี้", "พรุ่งนี้", "เมื่อวาน", "อาหาร", "เพื่อนรัก", "คิดถึง", "กระเป๋า", "พัดลม", "เก้าอี้", "ทีวี", "มือถือ", "วิ่งเล่น", "ทะเล", "ภูเขา", "อากาศ", "เย็นใจ", "ยิ้มแย้ม", "รวดเร็ว", "ดูแล", "ปลอดภัย"];
-
     const en_pool = ["always", "around", "become", "better", "bright", "change", "coffee", "create", "dream", "energy", "family", "friend", "future", "garden", "growth", "happy", "health", "inside", "journey", "kindly", "learn", "light", "listen", "memory", "morning", "nature", "online", "people", "planet", "simple", "smile", "strong", "system", "thanks", "travel", "update", "vision", "window", "wonder", "world"];
     
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
@@ -237,16 +234,10 @@
         const total = 1000;
         let pool = [];
         const activeMode = (currentGameType === 'race') ? 'th' : currentMode;
-        
         if (activeMode === 'th') {
-            // ลอจิก: 1 พยางค์ 8 คำ สลับ 2 พยางค์ 2 คำ
             while (pool.length < total) {
-                for (let i = 0; i < 8 && pool.length < total; i++) {
-                    pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
-                }
-                for (let j = 0; j < 2 && pool.length < total; j++) {
-                    pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
-                }
+                for (let i = 0; i < 8 && pool.length < total; i++) pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
+                for (let j = 0; j < 2 && pool.length < total; j++) pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
             }
         } else {
             for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
@@ -257,7 +248,6 @@
     function resetGame() {
         clearInterval(timer); isPlaying = false; timeLeft = 60;
         correctWords = 0; wrongWords = 0; currentWordIndex = 0;
-        
         if(currentGameType === 'race') {
             document.getElementById('timer-box').classList.add('hidden');
             document.getElementById('stat-label').innerText = "CORRECT";
@@ -266,7 +256,6 @@
             document.getElementById('stat-label').innerText = "WPM/WORDS";
             document.getElementById('timer').innerText = "60s";
         }
-
         document.getElementById('wpm-live').innerText = "0";
         document.getElementById('wrong-live').innerText = "0";
         document.getElementById('typing-input').value = "";
@@ -283,14 +272,12 @@
         if(cur) {
             cur.classList.add('active');
             const wrapper = document.getElementById('word-list-wrapper');
-            if (cur.offsetTop > 45) {
-                wrapper.style.transform = `translateY(-${cur.offsetTop - 10}px)`;
-            } else {
-                wrapper.style.transform = `translateY(0px)`;
-            }
+            if (cur.offsetTop > 45) wrapper.style.transform = `translateY(-${cur.offsetTop - 10}px)`;
+            else wrapper.style.transform = `translateY(0px)`;
         }
     }
 
+    // --- ส่วนที่แก้ไข: ป้องกันการกด Spacebar เปล่าๆ ---
     document.getElementById('typing-input').addEventListener('input', (e) => {
         const val = e.target.value;
         const targetWord = gameWords[currentWordIndex];
@@ -303,30 +290,37 @@
         
         if(val.endsWith(' ')) {
             const typed = val.trim();
-            if(typed === targetWord) { 
-                correctWords++; 
-                wordEl.classList.add('correct'); 
-                if(currentGameType === 'race') {
-                    db.collection("rooms").doc(currentRoomId).update({ 
-                        [`players.${auth.currentUser.uid}.progress`]: correctWords,
-                        [`players.${auth.currentUser.uid}.count`]: correctWords 
-                    });
-                    if(correctWords >= 100) endGame(); 
+            // เช็กว่าต้องมีตัวอักษรพิมพ์อยู่จริง (ความยาว > 0) ถึงจะทำงาน
+            if (typed.length > 0) {
+                if(typed === targetWord) { 
+                    correctWords++; 
+                    wordEl.classList.add('correct'); 
+                    if(currentGameType === 'race') {
+                        db.collection("rooms").doc(currentRoomId).update({ 
+                            [`players.${auth.currentUser.uid}.progress`]: correctWords,
+                            [`players.${auth.currentUser.uid}.count`]: correctWords 
+                        });
+                        if(correctWords >= 100) endGame(); 
+                    }
+                } else { 
+                    wrongWords++; 
+                    wordEl.classList.add('incorrect'); 
                 }
-            } else { 
-                wrongWords++; 
-                wordEl.classList.add('incorrect'); 
+                currentWordIndex++; 
+                e.target.value = '';
+                document.getElementById('wpm-live').innerText = correctWords;
+                document.getElementById('wrong-live').innerText = wrongWords;
+                updateHighlight();
+            } else {
+                // ถ้าเป็นแค่ Spacebar เปล่าๆ ให้ลบออก ไม่ให้เลื่อนคำ
+                e.target.value = '';
             }
-            currentWordIndex++; 
-            e.target.value = '';
-            document.getElementById('wpm-live').innerText = correctWords;
-            document.getElementById('wrong-live').innerText = wrongWords;
-            updateHighlight();
         } else {
             if (targetWord && !targetWord.startsWith(val)) wordEl.classList.add('error-typing');
             else wordEl.classList.remove('error-typing');
         }
     });
+    // -------------------------------------------
 
     function startTimer() { 
         timer = setInterval(() => { 
@@ -341,7 +335,6 @@
         isPlaying = false; clearInterval(timer);
         document.getElementById('typing-input').disabled = true;
         const user = auth.currentUser;
-
         if(currentGameType === 'race') {
             await db.collection("rooms").doc(currentRoomId).update({ status: 'finished' });
         } else if(user) {
@@ -353,7 +346,6 @@
             document.getElementById('res-correct').innerText = correctWords;
             document.getElementById('res-wrong').innerText = wrongWords;
             toggleModal('result-modal', true);
-
             const ref = db.collection("users").doc(user.uid);
             const doc = await ref.get();
             const data = doc.data();
@@ -396,7 +388,6 @@
         document.getElementById('race-section').classList.remove('hidden');
         document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
         resetGame();
-        
         roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
             const data = doc.data(); if(!data) return;
             const pids = Object.keys(data.players).sort();
