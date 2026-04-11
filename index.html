@@ -64,10 +64,10 @@
 <div class="container">
     <div id="auth-ui" class="card">
         <h2 style="text-align: center; letter-spacing: 2px; color: var(--primary);">⌨️ TYPING PRO</h2>
-        <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้" style="margin-bottom:15px;">
+        <input type="text" id="login-user" class="std-input" placeholder="ชื่อผู้ใช้ (Username)" style="margin-bottom:15px;">
         <input type="password" id="login-pass" class="std-input" placeholder="รหัสผ่าน" style="margin-bottom:15px;">
         <button class="btn-p" onclick="handleAuth('in')">เข้าสู่ระบบ</button>
-        <button onclick="handleAuth('up')" style="background:none; border:none; color:var(--text-dim); width:100%; margin-top:15px; cursor:pointer;">สมัครสมาชิกใหม่</button>
+        <button onclick="toggleModal('register-modal', true)" style="background:none; border:none; color:var(--text-dim); width:100%; margin-top:15px; cursor:pointer;">ยังไม่มีบัญชี? สมัครสมาชิกใหม่</button>
     </div>
 
     <div id="game-ui" class="card hidden">
@@ -122,6 +122,17 @@
             </div>
             <div class="lb-scroll" id="lb-list-main"></div>
         </div>
+    </div>
+</div>
+
+<div id="register-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2 style="color: var(--primary); margin-bottom: 20px;">✨ สมัครสมาชิกใหม่</h2>
+        <input type="text" id="reg-user" class="std-input" placeholder="ชื่อผู้ใช้สำหรับล็อกอิน" style="margin-bottom:15px;">
+        <input type="text" id="reg-nick" class="std-input" placeholder="ชื่อเล่นที่ใช้แสดงในเกม" style="margin-bottom:15px;">
+        <input type="password" id="reg-pass" class="std-input" placeholder="รหัสผ่าน (6 ตัวขึ้นไป)" style="margin-bottom:15px;">
+        <button class="btn-p" onclick="handleAuth('up')">ยืนยันสมัครสมาชิก</button>
+        <button onclick="toggleModal('register-modal', false)" style="margin-top:15px; background:none; border:none; color:white; cursor:pointer;">ยกเลิก</button>
     </div>
 </div>
 
@@ -196,6 +207,7 @@
         if(user) {
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
+            toggleModal('register-modal', false);
             syncUserData(user); loadLeaderboard(); resetGame();
         } else {
             document.getElementById('auth-ui').classList.remove('hidden');
@@ -204,17 +216,37 @@
     });
 
     async function handleAuth(type) {
-        const u = document.getElementById('login-user').value.trim();
-        const p = document.getElementById('login-pass').value;
-        if(!u || p.length < 6) return alert("ข้อมูลไม่ครบ!");
+        let u, p, n;
+        if(type === 'up') {
+            u = document.getElementById('reg-user').value.trim();
+            p = document.getElementById('reg-pass').value;
+            n = document.getElementById('reg-nick').value.trim();
+            if(!u || p.length < 6 || !n) return alert("กรุณากรอกข้อมูลให้ครบถ้วน และรหัสผ่านต้อง 6 ตัวขึ้นไป");
+        } else {
+            u = document.getElementById('login-user').value.trim();
+            p = document.getElementById('login-pass').value;
+            if(!u || !p) return alert("กรุณากรอกข้อมูลให้ครบ");
+        }
+
         const email = btoa(unescape(encodeURIComponent(u))).replace(/=/g, "") + "@typing.com";
+        
         try {
             if(type === 'up') {
                 const res = await auth.createUserWithEmailAndPassword(email, p);
                 const robotAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`;
-                await db.collection("users").doc(res.user.uid).set({ name: u, xp: 0, photo: robotAvatar, best: { th: 0, en: 0 } });
-            } else await auth.signInWithEmailAndPassword(email, p);
-        } catch(e) { alert("ชื่อผู้ใช้หรือรหัสผ่านผิด!"); }
+                await db.collection("users").doc(res.user.uid).set({ 
+                    name: n, // ใช้ชื่อเล่นตรงนี้
+                    username: u, // เก็บ username แยกไว้
+                    xp: 0, 
+                    photo: robotAvatar, 
+                    best: { th: 0, en: 0 } 
+                });
+            } else {
+                await auth.signInWithEmailAndPassword(email, p);
+            }
+        } catch(e) { 
+            alert(type === 'up' ? "ชื่อผู้ใช้นี้อาจมีผู้ใช้งานแล้ว!" : "ชื่อผู้ใช้หรือรหัสผ่านผิด!"); 
+        }
     }
 
     async function syncUserData(user) {
@@ -277,7 +309,6 @@
         }
     }
 
-    // --- ส่วนที่แก้ไข: ป้องกันการกด Spacebar เปล่าๆ ---
     document.getElementById('typing-input').addEventListener('input', (e) => {
         const val = e.target.value;
         const targetWord = gameWords[currentWordIndex];
@@ -290,7 +321,6 @@
         
         if(val.endsWith(' ')) {
             const typed = val.trim();
-            // เช็กว่าต้องมีตัวอักษรพิมพ์อยู่จริง (ความยาว > 0) ถึงจะทำงาน
             if (typed.length > 0) {
                 if(typed === targetWord) { 
                     correctWords++; 
@@ -312,7 +342,6 @@
                 document.getElementById('wrong-live').innerText = wrongWords;
                 updateHighlight();
             } else {
-                // ถ้าเป็นแค่ Spacebar เปล่าๆ ให้ลบออก ไม่ให้เลื่อนคำ
                 e.target.value = '';
             }
         } else {
@@ -320,7 +349,6 @@
             else wordEl.classList.remove('error-typing');
         }
     });
-    // -------------------------------------------
 
     function startTimer() { 
         timer = setInterval(() => { 
