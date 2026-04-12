@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
     
     <style>
         :root { 
@@ -247,7 +248,6 @@
             vertical-align: middle;
         }
 
-        /* Lobby Update Styles */
         .lobby-section {
             padding: 20px;
             border-radius: 20px;
@@ -263,6 +263,38 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
+
+        #traffic-light-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 20px;
+            border: 3px solid #334155;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .light {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 5px;
+            background: #000;
+            opacity: 0.2;
+            transition: 0.2s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .light.red.active { background: #ff0000; opacity: 1; box-shadow: 0 0 20px #ff0000; }
+        .light.yellow.active { background: #ffaa00; opacity: 1; box-shadow: 0 0 20px #ffaa00; }
+        .light.green.active { background: #00ff00; opacity: 1; box-shadow: 0 0 20px #00ff00; }
+        #countdown-text { font-size: 32px; font-weight: bold; margin-top: 10px; color: var(--text-main); }
+        
+        .bot-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .config-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px; padding: 5px; outline: none; }
     </style>
 </head>
 <body>
@@ -287,7 +319,7 @@
 
         <div class="profile-bar">
             <div style="position:relative">
-                <img id="display-avatar" class="user-avatar" src="">
+                <img id="display-avatar" class="user-avatar" src="" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'">
                 <span id="display-lvl-badge" style="position:absolute; bottom:-5px; right:-5px; background:var(--xp-color); color:white; font-size:10px; padding:2px 6px; border-radius:5px; font-weight:bold;">LV.1</span>
             </div>
             <div style="flex-grow:1; margin-left:20px;">
@@ -306,13 +338,31 @@
             <div class="mode-btn" id="btn-race" onclick="openRaceLobby()">🏎️ โหมดปะลอง</div>
         </div>
 
-        <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(16, 185, 129, 0.1); padding:20px; border-radius:20px; border: 1px solid var(--primary);">
+        <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(16, 185, 129, 0.1); padding:20px; border-radius:20px; border: 1px solid var(--primary); position: relative;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span id="room-id-display" style="color:var(--primary); font-weight:bold;">ROOM: -</span>
-                <span id="race-target" style="color:var(--secondary); font-size: 14px; font-weight: bold;">เป้าหมาย: 100 คำที่ถูกต้อง</span>
-                <button id="start-race-btn" class="btn-p" style="width:auto; padding:5px 20px;" onclick="triggerRaceStart()">เริ่มการแข่ง</button>
+                <div style="display: flex; gap: 10px;">
+                    <span id="race-target" style="color:var(--secondary); font-size: 14px; font-weight: bold;">เป้าหมาย: 100 คำ</span>
+                    <button onclick="leaveRoom()" style="background: var(--secondary); color: white; border: none; padding: 2px 10px; border-radius: 8px; cursor: pointer; font-size: 11px;">ออกจากห้อง</button>
+                </div>
             </div>
+            
+            <div id="traffic-light-container" class="hidden">
+                <div style="display: flex;">
+                    <div id="light-red" class="light red"></div>
+                    <div id="light-yellow" class="light yellow"></div>
+                    <div id="light-green" class="light green"></div>
+                </div>
+                <div id="countdown-text">READY?</div>
+            </div>
+
             <div id="race-lanes"></div>
+            
+            <div id="race-controls" style="margin-top: 15px; text-align: center;">
+                <button id="start-race-btn" class="btn-p hidden" style="width:200px; margin: 5px auto;" onclick="triggerRaceStart()">เริ่มการแข่งขัน</button>
+                <button id="ready-race-btn" class="btn-p hidden" style="width:200px; background:var(--xp-color); margin: 5px auto;" onclick="markReady()">เตรียมพร้อม</button>
+                <p id="wait-msg" class="hidden" style="color:var(--text-dim); font-size: 14px; margin-top: 10px;">รอเจ้าของห้องเริ่มเกม...</p>
+            </div>
         </div>
 
         <div id="stats-panel" style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.05); padding:15px; border-radius:20px;">
@@ -322,9 +372,12 @@
         </div>
 
         <div class="word-display-container"><div id="word-list-wrapper"></div></div>
-        <input type="text" id="typing-input" class="std-input" placeholder="เริ่มพิมพ์ที่นี่..." autocomplete="off">
         
-        <button class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มใหม่</button>
+        <div id="input-container">
+            <input type="text" id="typing-input" class="std-input" placeholder="เริ่มพิมพ์ที่นี่..." autocomplete="off">
+        </div>
+        
+        <button id="reset-btn" class="btn-reset" onclick="resetGame()">↻ รีเซ็ตและสุ่มใหม่</button>
 
         <div class="leaderboard-footer">
             <div class="lb-title">
@@ -366,14 +419,15 @@
         <h1 id="race-result-header" style="color: var(--primary); margin-bottom: 5px;">YOU WIN!</h1>
         <p id="race-result-sub" style="color: var(--text-dim); margin-bottom: 20px;">สรุปผลการแข่งขัน</p>
         <div id="race-result-list" style="text-align: left; margin-bottom: 25px;"></div>
-        <button class="btn-p" onclick="closeRaceResult()">กลับสู่หน้าหลัก</button>
+        <button class="btn-p" onclick="backToLobby()">กลับสู่หน้าหลักห้อง (แข่งต่อ)</button>
+        <button onclick="leaveRoom()" style="margin-top:10px; background:none; border:none; color:var(--secondary); cursor:pointer; font-weight:bold;">ออกจากห้อง</button>
     </div>
 </div>
 
 <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
         <h3>⚙️ ตั้งค่าโปรไฟล์</h3>
-        <img id="settings-preview" class="user-avatar" style="width:100px; height:100px; margin-bottom:20px;" src="">
+        <img id="settings-preview" class="user-avatar" style="width:100px; height:100px; margin-bottom:20px;" src="" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'">
         <input type="file" id="avatar-upload" hidden onchange="handleFileSelect(this)">
         <div style="display:flex; gap:10px; margin-bottom:20px;">
             <button class="btn-p" style="background:#334155; color:white;" onclick="document.getElementById('avatar-upload').click()">เลือกรูปภาพ</button>
@@ -387,15 +441,53 @@
 <div id="race-lobby-modal" class="modal hidden">
     <div class="modal-content" style="width: 450px;">
         <h2 style="color: var(--primary); margin-bottom: 10px;">🏎️ โหมดปะลอง</h2>
-        <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">แข่งพิมพ์เร็วกับเพื่อน ใครครบ 100 คำก่อนชนะ!</p>
         
         <div class="lobby-section" style="border-left: 4px solid var(--primary);">
-            <span class="lobby-label">สร้างการแข่งขันใหม่</span>
-            <button class="btn-p" onclick="createRaceRoom()" style="font-size: 18px;">➕ สร้างห้องใหม่</button>
-            <p style="font-size: 12px; color: var(--text-dim); margin-top: 8px;">ระบบจะสุ่มรหัสห้องให้คุณโดยอัตโนมัติ</p>
+            <span class="lobby-label">สร้างห้องแข่งขัน</span>
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <button id="btn-create-friend" class="btn-p" style="flex:1;" onclick="setCreateType('friend')">👥 เล่นกับเพื่อน</button>
+                <button id="btn-create-bot" class="btn-p" style="flex:1; background:#64748b;" onclick="setCreateType('bot')">🤖 แข่งกับบอท</button>
+            </div>
+            
+            <div id="bot-config-ui" class="hidden">
+                <div class="bot-config-grid">
+                    <div>
+                        <small class="lobby-label">ระดับความเร็วบอท</small>
+                        <select id="bot-lvl" class="config-select" style="width:100%;">
+                            <option value="1">Level 1 (มือใหม่)</option>
+                            <option value="2">Level 2 (ธรรมดา)</option>
+                            <option value="3">Level 3 (นักแข่ง)</option>
+                            <option value="4">Level 4 (โปร)</option>
+                            <option value="5">Level 5 (ตำนาน)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <small class="lobby-label">จำนวนบอท</small>
+                        <select id="bot-count" class="config-select" style="width:100%;">
+                            <option value="1">1 ตัว</option>
+                            <option value="2">2 ตัว</option>
+                            <option value="3">3 ตัว</option>
+                            <option value="4">4 ตัว</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top:10px;">
+                <small class="lobby-label">ระดับความยากของคำศัพท์</small>
+                <select id="word-difficulty" class="config-select" style="width:100%;">
+                    <option value="1">LV.1 - คำสั้นง่ายๆ</option>
+                    <option value="2">LV.2 - คำ 2 พยางค์ทั่วไป</option>
+                    <option value="3">LV.3 - คำยาว (เริ่มยาก)</option>
+                    <option value="4">LV.4 - คำศัพท์ระดับสูง</option>
+                    <option value="5">LV.5 - ระดับนิพพาน (ยากสุดๆ)</option>
+                </select>
+            </div>
+            
+            <button id="final-create-btn" class="btn-p" style="margin-top:15px; font-size:18px;" onclick="createRaceRoom()">➕ สร้างห้องใหม่</button>
         </div>
 
-        <div style="margin: 20px 0; color: var(--text-dim); font-weight: bold;">- หรือ -</div>
+        <div style="margin: 15px 0; color: var(--text-dim); font-weight: bold;">- หรือ -</div>
 
         <div class="lobby-section" style="border-left: 4px solid var(--xp-color);">
             <span class="lobby-label">เข้าร่วมห้องเพื่อน</span>
@@ -408,7 +500,6 @@
 </div>
 
 <script>
-    // Config Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyC4lXsegdu_1H9coMKQNiPWj3Bg2sPxT-0",
         authDomain: "thaityping-5b95f.firebaseapp.com",
@@ -420,33 +511,29 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
 
-    // Word Pools
     const th_1_syl = ["ไป", "มา", "ดี", "สวย", "รัก", "มาก", "ทำ", "กิน", "ดู", "ใจ", "ใน", "น้ำ", "รถ", "บ้าน", "นก", "แมว", "ครู", "พ่อ", "แม่", "พี่", "น้อง", "ฟ้า", "ลม", "ฝน", "ไฟ", "ดิน", "หิน", "จาน", "ชาม", "โต๊ะ", "หมู", "ไก่", "ปลา", "กุ้ง", "หอย", "ปู", "มด", "ลิง", "เสือ", "งู", "ไม้", "ดอก", "บาน", "เดิน", "นอน", "ยืน", "นิ่ง", "หอม", "ขาว", "ดำ", "แดง"];
     const th_2_syl = ["กินข้าว", "นอนหลับ", "ทำงาน", "ดีใจ", "น้ำใจ", "ท้องฟ้า", "น้ำดื่ม", "เดินเล่น", "ต้นไม้", "ปลาทู", "รถยนต์", "คนไทย", "หน้าต่าง", "หนังสือ", "ปากกา", "แม่ค้า", "ตลาด", "น้ำส้ม", "รองเท้า", "เสื้อผ้า", "ดอกไม้", "วันนี้", "พรุ่งนี้", "เมื่อวาน", "อาหาร", "เพื่อนรัก", "คิดถึง", "กระเป๋า", "พัดลม", "เก้าอี้", "ทีวี", "มือถือ", "วิ่งเล่น", "ทะเล", "ภูเขา", "อากาศ", "เย็นใจ", "ยิ้มแย้ม", "รวดเร็ว", "ดูแล", "ปลอดภัย"];
+    const th_race_lv3 = ["กระตือรือร้น", "ประวัติศาสตร์", "พระอาทิตย์", "ธรรมชาติ", "ประสบการณ์", "อุตสาหกรรม", "เทคโนโลยี", "ปรารถนา", "มุ่งมั่น", "สัมมนา", "พิจารณา", "ระเบียบ", "ประดิษฐ์", "สวัสดิการ", "วิถีชีวิต", "ประยุกต์", "นวัตกรรม"];
+    const th_race_lv4 = ["ภาพยนตร์", "สถาปัตยกรรม", "วิศวกรรม", "ปรัชญา", "กตัญญูกตเวที", "อุดมคติ", "เอกลักษณ์", "ยุทธศาสตร์", "สาธารณสุข", "เศรษฐกิจ", "อาสาสมัคร", "จินตนาการ", "วัฒนธรรม", "สุจริต", "อนุรักษ์"];
+    const th_race_lv5 = ["สัพพัญญู", "พจนาจารย์", "นรินทราธิเบศร์", "อัครสาวก", "พรหมวิหาร", "สุพรรณหงส์", "มโหรทึก", "กัลปพฤกษ์", "รัตนโกสินทร์", "ศรีสัชนาลัย", "พรรณนา", "อลังการ", "จตุรพักตร์", "สิริมงคล", "ไตรสิกขา"];
     const en_pool = ["always", "around", "become", "better", "bright", "change", "coffee", "create", "dream", "energy", "family", "friend", "future", "garden", "growth", "happy", "health", "inside", "journey", "kindly", "learn", "light", "listen", "memory", "morning", "nature", "online", "people", "planet", "simple", "smile", "strong", "system", "thanks", "travel", "update", "vision", "window", "wonder", "world"];
     
-    // Global State
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
     let timer = null, timeLeft = 60, correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
-    let currentRoomId = null, roomUnsub = null;
+    let currentRoomId = null, roomUnsub = null, createModeType = 'friend';
+    let botIntervals = [];
 
-    // --- Theme Logic ---
     function toggleTheme() {
         const isLight = document.body.classList.toggle('light-mode');
         localStorage.setItem('typing-theme', isLight ? 'light' : 'dark');
         document.getElementById('theme-toggle').innerText = isLight ? '☀️' : '🌙';
     }
-    if (localStorage.getItem('typing-theme') === 'light') {
-        document.body.classList.add('light-mode');
-        document.getElementById('theme-toggle').innerText = '☀️';
-    }
+    if (localStorage.getItem('typing-theme') === 'light') { document.body.classList.add('light-mode'); document.getElementById('theme-toggle').innerText = '☀️'; }
 
-    // Auth Listeners
     auth.onAuthStateChanged(user => {
         if(user) {
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
-            toggleModal('register-modal', false);
             syncUserData(user); loadLeaderboard(); resetGame();
         } else {
             document.getElementById('auth-ui').classList.remove('hidden');
@@ -460,11 +547,10 @@
             u = document.getElementById('reg-user').value.trim();
             p = document.getElementById('reg-pass').value;
             n = document.getElementById('reg-nick').value.trim();
-            if(!u || p.length < 6 || !n) return alert("กรุณากรอกข้อมูลให้ครบถ้วน และรหัสผ่านต้อง 6 ตัวขึ้นไป");
+            if(!u || p.length < 6 || !n) return alert("กรุณาใส่ข้อมูลให้ครบ");
         } else {
             u = document.getElementById('login-user').value.trim();
             p = document.getElementById('login-pass').value;
-            if(!u || !p) return alert("กรุณากรอกข้อมูลให้ครบ");
         }
         const email = btoa(unescape(encodeURIComponent(u))).replace(/=/g, "") + "@typing.com";
         try {
@@ -473,7 +559,7 @@
                 const robotAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`;
                 await db.collection("users").doc(res.user.uid).set({ name: n, username: u, xp: 0, photo: robotAvatar, best: { th: 0, en: 0 } });
             } else { await auth.signInWithEmailAndPassword(email, p); }
-        } catch(e) { alert(type === 'up' ? "ชื่อผู้ใช้นี้อาจมีผู้ใช้งานแล้ว!" : "ชื่อผู้ใช้หรือรหัสผ่านผิด!"); }
+        } catch(e) { alert("เกิดข้อผิดพลาด!"); }
     }
 
     async function syncUserData(user) {
@@ -481,14 +567,9 @@
         if(!doc.exists) return;
         const data = doc.data();
         document.getElementById('display-name').innerText = data.name || "User";
-        document.getElementById('display-avatar').src = data.photo || "";
-        
-        let bestScore = 0;
-        if (data.best && typeof data.best === 'object') {
-            bestScore = Number(data.best[currentMode]) || 0;
-        }
+        document.getElementById('display-avatar').src = data.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback";
+        let bestScore = (data.best && data.best[currentMode]) ? data.best[currentMode] : 0;
         document.getElementById('display-best-wpm').innerText = `BEST: ${bestScore}`;
-
         const xp = data.xp || 0;
         const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
         document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
@@ -496,28 +577,40 @@
         document.getElementById('xp-text').innerText = `${xp.toLocaleString()} XP`;
     }
 
-    function generateWords() {
+    function generateWords(forcedDiff = null) {
         const total = 1000; let pool = [];
-        const activeMode = (currentGameType === 'race') ? 'th' : currentMode;
-        if (activeMode === 'th') {
-            while (pool.length < total) {
-                for (let i = 0; i < 8 && pool.length < total; i++) pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
-                for (let j = 0; j < 2 && pool.length < total; j++) pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
-            }
-        } else { for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); }
+        if (currentGameType !== 'race') {
+            if (currentMode === 'th') {
+                while (pool.length < total) {
+                    for (let i = 0; i < 8 && pool.length < total; i++) pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
+                    for (let j = 0; j < 2 && pool.length < total; j++) pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
+                }
+            } else { for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); }
+            return pool;
+        }
+        const diff = forcedDiff || parseInt(document.getElementById('word-difficulty').value);
+        let sourceSet = (diff === 1) ? th_1_syl : (diff === 2) ? [...th_1_syl, ...th_2_syl] : (diff === 3) ? [...th_2_syl, ...th_race_lv3] : (diff === 4) ? [...th_race_lv3, ...th_race_lv4] : [...th_race_lv4, ...th_race_lv5];
+        for (let i = 0; i < total; i++) pool.push(sourceSet[Math.floor(Math.random() * sourceSet.length)]);
         return pool;
     }
 
     function resetGame() {
         clearInterval(timer); isPlaying = false; timeLeft = 60;
         correctWords = 0; wrongWords = 0; currentWordIndex = 0;
+        botIntervals.forEach(clearInterval); botIntervals = [];
+        document.getElementById('typing-input').classList.remove('hidden');
+        document.getElementById('reset-btn').classList.remove('hidden');
         if(currentGameType === 'race') {
             document.getElementById('timer-box').classList.add('hidden');
             document.getElementById('stat-label').innerText = "CORRECT";
+            document.getElementById('typing-input').classList.add('hidden');
+            document.getElementById('reset-btn').classList.add('hidden');
         } else {
             document.getElementById('timer-box').classList.remove('hidden');
             document.getElementById('stat-label').innerText = "WPM/WORDS";
             document.getElementById('timer').innerText = "60s";
+            document.getElementById('race-section').classList.add('hidden');
+            document.getElementById('reset-btn').classList.remove('hidden');
         }
         document.getElementById('wpm-live').innerText = "0";
         document.getElementById('wrong-live').innerText = "0";
@@ -551,10 +644,7 @@
                 if(typed === targetWord) { 
                     correctWords++; wordEl.classList.add('correct'); 
                     if(currentGameType === 'race') {
-                        db.collection("rooms").doc(currentRoomId).update({ 
-                            [`players.${auth.currentUser.uid}.progress`]: correctWords,
-                            [`players.${auth.currentUser.uid}.count`]: correctWords 
-                        });
+                        db.collection("rooms").doc(currentRoomId).update({ [`players.${auth.currentUser.uid}.progress`]: correctWords, [`players.${auth.currentUser.uid}.count`]: correctWords });
                         if(correctWords >= 100) endGame(); 
                     }
                 } else { wrongWords++; wordEl.classList.add('incorrect'); }
@@ -573,11 +663,12 @@
 
     async function endGame() {
         if(!isPlaying) return;
-        isPlaying = false; clearInterval(timer);
+        isPlaying = false; clearInterval(timer); botIntervals.forEach(clearInterval);
         document.getElementById('typing-input').disabled = true;
-        const user = auth.currentUser;
-        if(currentGameType === 'race') { await db.collection("rooms").doc(currentRoomId).update({ status: 'finished' }); }
-        else if(user) {
+        if(currentGameType === 'race') { 
+            await db.collection("rooms").doc(currentRoomId).update({ status: 'finished' }); 
+        } else {
+            const user = auth.currentUser;
             const xpEarned = correctWords * 2;
             const accuracy = Math.round((correctWords / (correctWords + (wrongWords||0))) * 100) || 0;
             document.getElementById('res-xp').innerText = `+${xpEarned} XP`;
@@ -588,144 +679,258 @@
             toggleModal('result-modal', true);
             const ref = db.collection("users").doc(user.uid);
             const doc = await ref.get(); const data = doc.data();
-            
-            let bests = (data.best && typeof data.best === 'object') ? data.best : { th: 0, en: 0 };
-            let currentBest = Number(bests[currentMode]) || 0;
-
-            if(correctWords > currentBest) {
+            let bests = data.best || { th: 0, en: 0 };
+            if(correctWords > (bests[currentMode] || 0)) {
                 bests[currentMode] = correctWords;
-                document.getElementById('display-best-wpm').innerText = `BEST: ${correctWords}`;
-                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "" }, {merge: true});
+                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback" }, {merge: true});
             }
-            
             await ref.update({ xp: (data.xp || 0) + xpEarned, best: bests });
             syncUserData(user); loadLeaderboard();
         }
     }
 
-    function openRaceLobby() { toggleModal('race-lobby-modal', true); }
+    function setCreateType(type) {
+        createModeType = type;
+        document.getElementById('btn-create-friend').style.background = (type === 'friend') ? 'var(--primary)' : '#64748b';
+        document.getElementById('btn-create-bot').style.background = (type === 'bot') ? 'var(--primary)' : '#64748b';
+        document.getElementById('bot-config-ui').classList.toggle('hidden', type !== 'bot');
+    }
+
+    function openRaceLobby() { toggleModal('race-lobby-modal', true); setCreateType('friend'); }
     
     async function createRaceRoom() {
         try {
             const rid = Math.random().toString(36).substring(7).toUpperCase(); 
             currentGameType = 'race'; 
-            const rWords = generateWords(); 
+            const diff = parseInt(document.getElementById('word-difficulty').value);
+            const rWords = generateWords(diff); 
             const u = auth.currentUser; 
-            const doc = await db.collection("users").doc(u.uid).get();
-            const d = doc.data();
-
-            await db.collection("rooms").doc(rid).set({ 
-                status: 'waiting', 
-                words: rWords, 
-                players: { 
-                    [u.uid]: { name: d.name, progress: 0, count: 0, photo: d.photo || "" } 
-                } 
-            });
+            const d = (await db.collection("users").doc(u.uid).get()).data();
+            let players = { [u.uid]: { name: d.name, progress: 0, count: 0, photo: d.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback", ready: true, isBot: false } };
+            if(createModeType === 'bot') {
+                const bLvl = parseInt(document.getElementById('bot-lvl').value);
+                for(let i=1; i<=parseInt(document.getElementById('bot-count').value); i++) {
+                    players[`bot_${i}`] = { name: `Bot Lv.${bLvl} (#${i})`, progress: 0, count: 0, photo: `https://api.dicebear.com/7.x/bottts/svg?seed=bot${i}${rid}`, ready: true, isBot: true, botLvl: bLvl };
+                }
+            }
+            await db.collection("rooms").doc(rid).set({ status: 'waiting', owner: u.uid, words: rWords, players: players, isBotGame: (createModeType === 'bot'), wordDiff: diff });
             enterRace(rid);
-        } catch(e) { alert("สร้างห้องไม่สำเร็จ: " + e.message); }
+        } catch(e) { alert("สร้างห้องไม่สำเร็จ!"); }
     }
 
     async function joinRaceRoom() {
-        try {
-            const rid = document.getElementById('join-room-input').value.trim().toUpperCase(); 
-            if(!rid) return alert("กรุณากรอกรหัสห้อง!");
-            
-            const roomRef = db.collection("rooms").doc(rid);
-            const roomSnap = await roomRef.get();
-            if(!roomSnap.exists) return alert("ไม่พบรหัสห้องนี้!");
-            if(roomSnap.data().status !== 'waiting') return alert("การแข่งขันเริ่มไปแล้วหรือจบลงแล้ว!");
-
-            currentGameType = 'race'; 
-            const u = auth.currentUser; 
-            const doc = await db.collection("users").doc(u.uid).get();
-            const d = doc.data();
-
-            await roomRef.update({ 
-                [`players.${u.uid}`]: { name: d.name, progress: 0, count: 0, photo: d.photo || "" } 
-            });
-            enterRace(rid);
-        } catch(e) { alert("เข้าร่วมห้องไม่สำเร็จ!"); }
+        const rid = document.getElementById('join-room-input').value.trim().toUpperCase(); 
+        if(!rid) return;
+        const rRef = db.collection("rooms").doc(rid);
+        const snap = await rRef.get();
+        if(!snap.exists || snap.data().status !== 'waiting') return alert("ไม่พบห้อง!");
+        currentGameType = 'race'; 
+        const u = auth.currentUser; 
+        const d = (await db.collection("users").doc(u.uid).get()).data();
+        await rRef.update({ [`players.${u.uid}`]: { name: d.name, progress: 0, count: 0, photo: d.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback", ready: false, isBot: false } });
+        enterRace(rid);
     }
 
     function enterRace(rid) {
         currentRoomId = rid; toggleModal('race-lobby-modal', false);
         document.getElementById('race-section').classList.remove('hidden');
         document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
+        document.getElementById('race-controls').classList.remove('hidden');
         resetGame();
         
         if(roomUnsub) roomUnsub();
         roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
             const data = doc.data(); if(!data) return;
-            const pids = Object.keys(data.players).sort();
-            document.getElementById('race-lanes').innerHTML = pids.map(pid => `
-                <div class="race-lane">
-                    <div class="race-car" style="left:${(data.players[pid].progress / 100) * 85}%;">
-                        <img src="${data.players[pid].photo}" style="width:24px; height:24px; border-radius:50%; border:1px solid var(--primary);">
-                        <span>${data.players[pid].name} (${data.players[pid].count}/100)</span>
-                    </div>
-                </div>`).join('');
+            const myId = auth.currentUser.uid;
+            const isOwner = data.owner === myId;
             
+            // ปุ่มต่างๆ
+            document.getElementById('start-race-btn').classList.toggle('hidden', !isOwner || data.status !== 'waiting');
+            document.getElementById('ready-race-btn').classList.toggle('hidden', isOwner || data.players[myId].ready || data.status !== 'waiting');
+            document.getElementById('wait-msg').classList.toggle('hidden', isOwner || !data.players[myId].ready || data.status !== 'waiting');
+
+            // แสดงลู่วิ่งแบบตำแหน่งคงที่ (เรียงตาม Key ID)
+            const sortedPlayerIds = Object.keys(data.players).sort(); 
+            document.getElementById('race-lanes').innerHTML = sortedPlayerIds.map(pid => {
+                const p = data.players[pid];
+                return `
+                <div class="race-lane">
+                    <div class="race-car" style="left:${(p.progress / 100) * 85}%;">
+                        <img src="${p.photo}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" style="width:24px; height:24px; border-radius:50%; border:1px solid ${p.ready ? '#10b981' : '#64748b'};">
+                        <span>${p.name} (${p.count}/100) ${p.ready ? '✅' : ''}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            if(data.status === 'countdown') {
+                document.getElementById('traffic-light-container').classList.remove('hidden');
+                document.getElementById('race-controls').classList.add('hidden');
+                updateLights(data.countdown);
+            }
             if(data.status === 'playing' && !isPlaying) { 
+                document.getElementById('traffic-light-container').classList.add('hidden');
+                document.getElementById('typing-input').classList.remove('hidden');
+                document.getElementById('typing-input').focus();
                 gameWords = data.words; 
                 document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join(''); 
-                document.getElementById('start-race-btn').classList.add('hidden'); 
-                isPlaying = true; 
+                isPlaying = true;
+                if(isOwner && data.isBotGame) startBots(data.players);
             }
-            if(data.status === 'finished') { 
-                showRaceResults(data.players); 
-                if(roomUnsub) { roomUnsub(); roomUnsub = null; } 
+            if(data.status === 'finished') { showRaceResults(data.players); }
+            
+            // เมื่อห้องกลับมาสถานะ waiting ให้รีเซ็ต UI การเล่น
+            if(data.status === 'waiting' && isPlaying) { 
+                isPlaying = false;
+                resetGame(); 
             }
         });
     }
 
+    function startBots(players) {
+        Object.keys(players).forEach(pid => {
+            if(players[pid].isBot) {
+                const speed = [0, 1600, 1300, 1000, 700, 500][players[pid].botLvl];
+                let bCount = 0;
+                const inv = setInterval(() => {
+                    if(!isPlaying) { clearInterval(inv); return; }
+                    bCount++;
+                    db.collection("rooms").doc(currentRoomId).update({ [`players.${pid}.progress`]: bCount, [`players.${pid}.count`]: bCount });
+                    if(bCount >= 100) { clearInterval(inv); endGame(); }
+                }, speed);
+                botIntervals.push(inv);
+            }
+        });
+    }
+
+    async function markReady() { await db.collection("rooms").doc(currentRoomId).update({ [`players.${auth.currentUser.uid}.ready`]: true }); }
+
+    function updateLights(num) {
+        document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+        const text = document.getElementById('countdown-text');
+        if(num === 3) { document.getElementById('light-red').classList.add('active'); text.innerText = "READY..."; }
+        if(num === 2) { document.getElementById('light-yellow').classList.add('active'); text.innerText = "SET..."; }
+        if(num === 1) { document.getElementById('light-green').classList.add('active'); text.innerText = "GO!"; }
+    }
+
+    async function triggerRaceStart() {
+        const rRef = db.collection("rooms").doc(currentRoomId);
+        const rData = (await rRef.get()).data();
+        const players = rData.players;
+        Object.keys(players).forEach(p => { players[p].progress = 0; players[p].count = 0; });
+        await rRef.update({ status: 'countdown', countdown: 3, players: players });
+        setTimeout(() => rRef.update({ countdown: 2 }), 1000);
+        setTimeout(() => rRef.update({ countdown: 1 }), 2000);
+        setTimeout(() => rRef.update({ status: 'playing' }), 3000);
+    }
+
     function showRaceResults(players) {
-        clearInterval(timer); isPlaying = false;
+        isPlaying = false; botIntervals.forEach(clearInterval);
         const sorted = Object.keys(players).map(id => ({id, ...players[id]})).sort((a,b) => b.count - a.count);
-        const myId = auth.currentUser.uid; const myRank = sorted.findIndex(p => p.id === myId) + 1;
-        document.getElementById('race-result-header').innerText = (myRank === 1) ? "YOU WIN! 🏆" : "YOU LOST! 💀";
-        document.getElementById('race-result-list').innerHTML = sorted.map((p, i) => `<div class="rank-item" style="border: 1px solid ${i===0?'var(--primary)':'transparent'}"><div class="rank-info"><span style="width:20px;">${i+1}</span><img src="${p.photo}" class="rank-img"><span style="${p.id === myId ? 'color:var(--primary); font-weight:bold;' : ''}">${p.name}</span></div><b>${p.count} Correct</b></div>`).join('');
+        document.getElementById('race-result-header').innerText = (sorted[0].id === auth.currentUser.uid) ? "YOU WIN! 🏆" : "GAME OVER! 💀";
+        document.getElementById('race-result-list').innerHTML = sorted.map((p, i) => `<div class="rank-item"><div class="rank-info"><span>${i+1}</span><img src="${p.photo}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" class="rank-img"><span>${p.name}</span></div><b>${p.count} Correct</b></div>`).join('');
         toggleModal('race-result-modal', true);
     }
 
-    function closeRaceResult() { toggleModal('race-result-modal', false); document.getElementById('race-section').classList.add('hidden'); document.getElementById('start-race-btn').classList.remove('hidden'); currentGameType = 'practice'; resetGame(); }
-    async function triggerRaceStart() { await db.collection("rooms").doc(currentRoomId).update({ status: 'playing' }); }
+    async function backToLobby() {
+        toggleModal('race-result-modal', false);
+        isPlaying = false; 
+        const rRef = db.collection("rooms").doc(currentRoomId);
+        const snap = await rRef.get();
+        if(!snap.exists) return;
+        const rData = snap.data();
+        
+        // รีเซ็ตคะแนนและสถานะความพร้อมของทุกคนในห้อง
+        const updatedPlayers = rData.players;
+        Object.keys(updatedPlayers).forEach(pid => {
+            updatedPlayers[pid].progress = 0;
+            updatedPlayers[pid].count = 0;
+            // เจ้าของห้องพร้อมเสมอ คนอื่นต้องกดใหม่
+            updatedPlayers[pid].ready = (pid === rData.owner || updatedPlayers[pid].isBot);
+        });
+        
+        await rRef.update({ 
+            status: 'waiting', 
+            players: updatedPlayers, 
+            words: generateWords(rData.wordDiff) 
+        });
+
+        document.getElementById('race-controls').classList.remove('hidden');
+        resetGame();
+    }
+
+    async function leaveRoom() {
+        if(!currentRoomId) return;
+        const u = auth.currentUser;
+        const rRef = db.collection("rooms").doc(currentRoomId);
+        const snap = await rRef.get();
+        if(snap.exists) {
+            const data = snap.data();
+            if(data.owner === u.uid) { await rRef.delete(); }
+            else { await rRef.update({ [`players.${u.uid}`]: firebase.firestore.FieldValue.delete() }); }
+        }
+        if(roomUnsub) roomUnsub();
+        roomUnsub = null; currentRoomId = null;
+        toggleModal('race-result-modal', false);
+        currentGameType = 'practice';
+        resetGame();
+    }
 
     function toggleModal(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
     function openSettings() { toggleModal('settings-modal', true); document.getElementById('settings-preview').src = document.getElementById('display-avatar').src; }
-    function handleFileSelect(i) { if(i.files[0]) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); } }
+    
+    function handleFileSelect(i) { 
+        if(i.files[0]) { 
+            const r = new FileReader(); 
+            r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; 
+            r.readAsDataURL(i.files[0]); 
+        } 
+    }
     
     async function saveSettings() {
-        const saveBtn = document.getElementById('save-btn-ui'); saveBtn.innerText = "กำลังบันทึก..."; saveBtn.disabled = true;
-        const u = auth.currentUser; const newName = document.getElementById('settings-name').value.trim();
-        const file = document.getElementById('avatar-upload').files[0]; let url = document.getElementById('settings-preview').src;
-        try {
-            if(file) { const ref = storage.ref().child(`avatars/${u.uid}_${Date.now()}`); const task = await ref.put(file); url = await task.ref.getDownloadURL(); }
-            const updateObj = { photo: url }; if(newName) updateObj.name = newName;
-            await db.collection("users").doc(u.uid).update(updateObj);
-            ['th', 'en'].forEach(async m => { await db.collection(`leaderboard_${m}`).doc(u.uid).update(updateObj).catch(()=>{}); });
-            await syncUserData(u); toggleModal('settings-modal', false); alert("บันทึกสำเร็จ!");
-        } catch(e) { alert("ล้มเหลว!"); } finally { saveBtn.innerText = "บันทึกข้อมูล"; saveBtn.disabled = false; }
+        const u = auth.currentUser; 
+        const newName = document.getElementById('settings-name').value.trim();
+        const previewSrc = document.getElementById('settings-preview').src;
+        let url = previewSrc;
+        
+        if(previewSrc.startsWith('data:')) {
+            try {
+                const ref = storage.ref().child(`avatars/${u.uid}`);
+                const task = await ref.putString(previewSrc, 'data_url');
+                url = await task.ref.getDownloadURL();
+            } catch(e) { 
+                console.log("Storage error, using base64 instead");
+                url = previewSrc; 
+            }
+        }
+        
+        const up = { photo: url }; 
+        if(newName) up.name = newName;
+        await db.collection("users").doc(u.uid).update(up);
+        await db.collection(`leaderboard_th`).doc(u.uid).update(up).catch(()=>{});
+        await db.collection(`leaderboard_en`).doc(u.uid).update(up).catch(()=>{});
+        
+        syncUserData(u); 
+        toggleModal('settings-modal', false);
+        alert("บันทึกข้อมูลสำเร็จ!");
     }
 
     async function loadLeaderboard() {
-        const modeName = currentMode === 'th' ? "ภาษาไทย" : "English"; document.getElementById('lb-mode-name').innerText = modeName;
         const snap = await db.collection(`leaderboard_${currentMode}`).orderBy("wpm", "desc").limit(1000).get();
         let html = ''; let r = 1;
-        snap.forEach(doc => { const d = doc.data(); html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo}" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`; });
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo || 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback'}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`; 
+        });
         document.getElementById('lb-list-main').innerHTML = html || '<p style="text-align:center; opacity:0.3">No Data</p>';
     }
 
     function toggleStatsVisibility() { statsVisible = !statsVisible; document.getElementById('stats-panel').classList.toggle('invisible-stats', !statsVisible); }
     function switchMode(m) { 
-        currentMode = m; 
-        currentGameType = 'practice'; 
-        document.getElementById('race-section').classList.add('hidden'); 
+        currentMode = m; currentGameType = 'practice'; 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); 
         document.getElementById(`btn-${m}`).classList.add('active'); 
-        if(roomUnsub) { roomUnsub(); roomUnsub = null; } 
-        resetGame(); 
-        loadLeaderboard();
-        if(auth.currentUser) syncUserData(auth.currentUser);
+        if(roomUnsub) { leaveRoom(); } 
+        resetGame(); loadLeaderboard(); syncUserData(auth.currentUser);
     }
 </script>
 </body>
