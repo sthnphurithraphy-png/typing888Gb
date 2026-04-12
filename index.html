@@ -24,7 +24,6 @@
             --grid-color: rgba(255, 255, 255, 0.05);
         }
 
-        /* Light Mode Styles */
         body.light-mode {
             --bg-gradient: radial-gradient(circle at top left, #f1f5f9, #dcfce7, #f1f5f9);
             --card-bg: rgba(255, 255, 255, 0.9);
@@ -234,6 +233,20 @@
         .result-box { background: rgba(128,128,128,0.1); padding: 15px; border-radius: 20px; border: 1px solid var(--border); }
         .result-val { font-size: 24px; font-weight: bold; color: var(--primary); }
         .xp-earned { color: var(--xp-color); font-size: 28px; font-weight: bold; text-shadow: 0 0 15px rgba(14, 165, 233, 0.4); }
+
+        /* Style for Best WPM badge next to name */
+        .best-wpm-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-left: 10px;
+            border: 1px solid var(--primary);
+            font-weight: bold;
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -262,7 +275,10 @@
                 <span id="display-lvl-badge" style="position:absolute; bottom:-5px; right:-5px; background:var(--xp-color); color:white; font-size:10px; padding:2px 6px; border-radius:5px; font-weight:bold;">LV.1</span>
             </div>
             <div style="flex-grow:1; margin-left:20px;">
-                <div id="display-name" style="font-weight:bold; color:var(--primary); font-size:18px;">User</div>
+                <div style="display: flex; align-items: center;">
+                    <div id="display-name" style="font-weight:bold; color:var(--primary); font-size:18px;">User</div>
+                    <span id="display-best-wpm" class="best-wpm-badge">BEST: 0</span>
+                </div>
                 <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
                 <small id="xp-text" style="font-size:11px; color:var(--text-dim);">0 XP</small>
             </div>
@@ -391,7 +407,6 @@
         localStorage.setItem('typing-theme', isLight ? 'light' : 'dark');
         document.getElementById('theme-toggle').innerText = isLight ? '☀️' : '🌙';
     }
-    // Load saved theme
     if (localStorage.getItem('typing-theme') === 'light') {
         document.body.classList.add('light-mode');
         document.getElementById('theme-toggle').innerText = '☀️';
@@ -438,6 +453,11 @@
         const data = doc.data();
         document.getElementById('display-name').innerText = data.name || "User";
         document.getElementById('display-avatar').src = data.photo || "";
+        
+        // Update Best WPM Badge based on current mode
+        const bestWpm = (data.best && data.best[currentMode]) ? data.best[currentMode] : 0;
+        document.getElementById('display-best-wpm').innerText = `BEST: ${bestWpm}`;
+
         const xp = data.xp || 0;
         const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
         document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
@@ -538,10 +558,14 @@
             const ref = db.collection("users").doc(user.uid);
             const doc = await ref.get(); const data = doc.data();
             let bests = data.best || { th: 0, en: 0 };
+            
+            // Logic: Update Best WPM if current score is higher
             if(correctWords > (bests[currentMode] || 0)) {
                 bests[currentMode] = correctWords;
+                document.getElementById('display-best-wpm').innerText = `BEST: ${correctWords}`;
                 await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "" }, {merge: true});
             }
+            
             await ref.update({ xp: (data.xp || 0) + xpEarned, best: bests });
             syncUserData(user); loadLeaderboard();
         }
@@ -618,7 +642,19 @@
     }
 
     function toggleStatsVisibility() { statsVisible = !statsVisible; document.getElementById('stats-panel').classList.toggle('invisible-stats', !statsVisible); }
-    function switchMode(m) { currentMode = m; currentGameType = 'practice'; document.getElementById('race-section').classList.add('hidden'); document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); document.getElementById(`btn-${m}`).classList.add('active'); if(roomUnsub) { roomUnsub(); roomUnsub = null; } resetGame(); loadLeaderboard(); }
+    function switchMode(m) { 
+        currentMode = m; 
+        currentGameType = 'practice'; 
+        document.getElementById('race-section').classList.add('hidden'); 
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); 
+        document.getElementById(`btn-${m}`).classList.add('active'); 
+        if(roomUnsub) { roomUnsub(); roomUnsub = null; } 
+        resetGame(); 
+        loadLeaderboard();
+        
+        // Refresh Best WPM display for the new mode
+        if(auth.currentUser) syncUserData(auth.currentUser);
+    }
 </script>
 </body>
 </html>
