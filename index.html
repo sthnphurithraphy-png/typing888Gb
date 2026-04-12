@@ -234,7 +234,6 @@
         .result-val { font-size: 24px; font-weight: bold; color: var(--primary); }
         .xp-earned { color: var(--xp-color); font-size: 28px; font-weight: bold; text-shadow: 0 0 15px rgba(14, 165, 233, 0.4); }
 
-        /* Style for Best WPM badge next to name */
         .best-wpm-badge {
             background: rgba(16, 185, 129, 0.2);
             color: var(--primary);
@@ -454,9 +453,12 @@
         document.getElementById('display-name').innerText = data.name || "User";
         document.getElementById('display-avatar').src = data.photo || "";
         
-        // Update Best WPM Badge based on current mode
-        const bestWpm = (data.best && data.best[currentMode]) ? data.best[currentMode] : 0;
-        document.getElementById('display-best-wpm').innerText = `BEST: ${bestWpm}`;
+        // FIX: Check if data.best exists and is an object, otherwise default to 0
+        let bestScore = 0;
+        if (data.best && typeof data.best === 'object') {
+            bestScore = Number(data.best[currentMode]) || 0;
+        }
+        document.getElementById('display-best-wpm').innerText = `BEST: ${bestScore}`;
 
         const xp = data.xp || 0;
         const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
@@ -557,10 +559,12 @@
             toggleModal('result-modal', true);
             const ref = db.collection("users").doc(user.uid);
             const doc = await ref.get(); const data = doc.data();
-            let bests = data.best || { th: 0, en: 0 };
             
-            // Logic: Update Best WPM if current score is higher
-            if(correctWords > (bests[currentMode] || 0)) {
+            // FIX: Ensure best is an object
+            let bests = (data.best && typeof data.best === 'object') ? data.best : { th: 0, en: 0 };
+            let currentBest = Number(bests[currentMode]) || 0;
+
+            if(correctWords > currentBest) {
                 bests[currentMode] = correctWords;
                 document.getElementById('display-best-wpm').innerText = `BEST: ${correctWords}`;
                 await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "" }, {merge: true});
@@ -651,8 +655,6 @@
         if(roomUnsub) { roomUnsub(); roomUnsub = null; } 
         resetGame(); 
         loadLeaderboard();
-        
-        // Refresh Best WPM display for the new mode
         if(auth.currentUser) syncUserData(auth.currentUser);
     }
 </script>
