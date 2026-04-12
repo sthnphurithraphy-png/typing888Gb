@@ -246,6 +246,23 @@
             display: inline-block;
             vertical-align: middle;
         }
+
+        /* Lobby Update Styles */
+        .lobby-section {
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+            text-align: left;
+        }
+        .lobby-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -368,12 +385,25 @@
 </div>
 
 <div id="race-lobby-modal" class="modal hidden">
-    <div class="modal-content">
-        <h3>🏎️ โหมดปะลอง (ครบ 100 คำก่อนชนะ)</h3>
-        <button class="btn-p" onclick="createRaceRoom()" style="margin-bottom:15px;">สร้างห้องใหม่</button>
-        <input type="text" id="join-room-input" class="std-input" placeholder="รหัสห้อง">
-        <button class="btn-p" onclick="joinRaceRoom()" style="margin-top:10px;">เข้าร่วมห้อง</button>
-        <button onclick="toggleModal('race-lobby-modal', false)" style="margin-top:20px; background:none; border:none; color:var(--text-dim); cursor:pointer;">กลับ</button>
+    <div class="modal-content" style="width: 450px;">
+        <h2 style="color: var(--primary); margin-bottom: 10px;">🏎️ โหมดปะลอง</h2>
+        <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 25px;">แข่งพิมพ์เร็วกับเพื่อน ใครครบ 100 คำก่อนชนะ!</p>
+        
+        <div class="lobby-section" style="border-left: 4px solid var(--primary);">
+            <span class="lobby-label">สร้างการแข่งขันใหม่</span>
+            <button class="btn-p" onclick="createRaceRoom()" style="font-size: 18px;">➕ สร้างห้องใหม่</button>
+            <p style="font-size: 12px; color: var(--text-dim); margin-top: 8px;">ระบบจะสุ่มรหัสห้องให้คุณโดยอัตโนมัติ</p>
+        </div>
+
+        <div style="margin: 20px 0; color: var(--text-dim); font-weight: bold;">- หรือ -</div>
+
+        <div class="lobby-section" style="border-left: 4px solid var(--xp-color);">
+            <span class="lobby-label">เข้าร่วมห้องเพื่อน</span>
+            <input type="text" id="join-room-input" class="std-input" placeholder="ใส่รหัสห้อง (เช่น: AXB2)" style="margin-bottom: 10px; border-color: var(--xp-color);">
+            <button class="btn-p" onclick="joinRaceRoom()" style="background: var(--xp-color);">🏎️ เข้าร่วมห้อง</button>
+        </div>
+
+        <button onclick="toggleModal('race-lobby-modal', false)" style="margin-top:10px; background:none; border:none; color:var(--text-dim); cursor:pointer; font-weight: bold;">ยกเลิกและกลับ</button>
     </div>
 </div>
 
@@ -573,7 +603,6 @@
         }
     }
 
-    // --- FIX: Optimized Race Logic ---
     function openRaceLobby() { toggleModal('race-lobby-modal', true); }
     
     async function createRaceRoom() {
@@ -585,7 +614,6 @@
             const doc = await db.collection("users").doc(u.uid).get();
             const d = doc.data();
 
-            // Create room and add owner in one step
             await db.collection("rooms").doc(rid).set({ 
                 status: 'waiting', 
                 words: rWords, 
@@ -600,7 +628,7 @@
     async function joinRaceRoom() {
         try {
             const rid = document.getElementById('join-room-input').value.trim().toUpperCase(); 
-            if(!rid) return;
+            if(!rid) return alert("กรุณากรอกรหัสห้อง!");
             
             const roomRef = db.collection("rooms").doc(rid);
             const roomSnap = await roomRef.get();
@@ -662,7 +690,6 @@
     function closeRaceResult() { toggleModal('race-result-modal', false); document.getElementById('race-section').classList.add('hidden'); document.getElementById('start-race-btn').classList.remove('hidden'); currentGameType = 'practice'; resetGame(); }
     async function triggerRaceStart() { await db.collection("rooms").doc(currentRoomId).update({ status: 'playing' }); }
 
-    // Helpers
     function toggleModal(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
     function openSettings() { toggleModal('settings-modal', true); document.getElementById('settings-preview').src = document.getElementById('display-avatar').src; }
     function handleFileSelect(i) { if(i.files[0]) { const r = new FileReader(); r.onload = (e) => document.getElementById('settings-preview').src = e.target.result; r.readAsDataURL(i.files[0]); } }
