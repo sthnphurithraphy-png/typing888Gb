@@ -132,7 +132,7 @@
             position: relative; 
         }
         #word-list-wrapper { display: flex; flex-wrap: wrap; gap: 10px 20px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .word { color: var(--text-dim); transition: 0.1s; }
+        .word { color: var(--text-dim); transition: 0.1s; user-select: none; }
         .word.active { color: var(--text-main); border-bottom: 3px solid var(--primary); }
         .word.error-typing { color: var(--secondary) !important; text-shadow: 0 0 10px rgba(244, 63, 94, 0.4); }
         .word.correct { color: var(--primary); }
@@ -633,7 +633,19 @@
         }
     }
 
+    // --- FIX: BLOCK PASTE & PREVENT CHEATING ---
+    document.getElementById('typing-input').addEventListener('paste', (e) => {
+        e.preventDefault();
+        alert("ห้ามลักไก่! ต้องพิมพ์เองเท่านั้นนะครับ");
+    });
+
     document.getElementById('typing-input').addEventListener('input', (e) => {
+        // ตรวจสอบว่าเป็น Event ที่เกิดจากผู้ใช้พิมพ์จริงหรือไม่ (Anti-Script)
+        if (e.inputType === 'insertFromPaste' || !e.isTrusted) {
+            e.target.value = "";
+            return;
+        }
+
         const val = e.target.value;
         const targetWord = gameWords[currentWordIndex];
         const wordEl = document.getElementById(`w-${currentWordIndex}`);
@@ -744,12 +756,10 @@
             const myId = auth.currentUser.uid;
             const isOwner = data.owner === myId;
             
-            // ปุ่มต่างๆ
             document.getElementById('start-race-btn').classList.toggle('hidden', !isOwner || data.status !== 'waiting');
             document.getElementById('ready-race-btn').classList.toggle('hidden', isOwner || data.players[myId].ready || data.status !== 'waiting');
             document.getElementById('wait-msg').classList.toggle('hidden', isOwner || !data.players[myId].ready || data.status !== 'waiting');
 
-            // แสดงลู่วิ่งแบบตำแหน่งคงที่ (เรียงตาม Key ID)
             const sortedPlayerIds = Object.keys(data.players).sort(); 
             document.getElementById('race-lanes').innerHTML = sortedPlayerIds.map(pid => {
                 const p = data.players[pid];
@@ -777,8 +787,6 @@
                 if(isOwner && data.isBotGame) startBots(data.players);
             }
             if(data.status === 'finished') { showRaceResults(data.players); }
-            
-            // เมื่อห้องกลับมาสถานะ waiting ให้รีเซ็ต UI การเล่น
             if(data.status === 'waiting' && isPlaying) { 
                 isPlaying = false;
                 resetGame(); 
@@ -838,22 +846,13 @@
         const snap = await rRef.get();
         if(!snap.exists) return;
         const rData = snap.data();
-        
-        // รีเซ็ตคะแนนและสถานะความพร้อมของทุกคนในห้อง
         const updatedPlayers = rData.players;
         Object.keys(updatedPlayers).forEach(pid => {
             updatedPlayers[pid].progress = 0;
             updatedPlayers[pid].count = 0;
-            // เจ้าของห้องพร้อมเสมอ คนอื่นต้องกดใหม่
             updatedPlayers[pid].ready = (pid === rData.owner || updatedPlayers[pid].isBot);
         });
-        
-        await rRef.update({ 
-            status: 'waiting', 
-            players: updatedPlayers, 
-            words: generateWords(rData.wordDiff) 
-        });
-
+        await rRef.update({ status: 'waiting', players: updatedPlayers, words: generateWords(rData.wordDiff) });
         document.getElementById('race-controls').classList.remove('hidden');
         resetGame();
     }
