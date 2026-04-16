@@ -23,6 +23,16 @@
             --xp-color: #0ea5e9; 
             --border: rgba(255, 255, 255, 0.08);
             --grid-color: rgba(255, 255, 255, 0.05);
+            
+            --rank-bronze: #cd7f32;
+            --rank-silver: #c0c0c0;
+            --rank-gold: #ffd700;
+            --rank-platinum: #e5e4e2;
+            --rank-diamond: #b9f2ff;
+            --rank-crown: #ff4500;
+            --rank-valiant: #9370db;
+            --rank-conqueror: #ff0000;
+            --rank-eternal: #00ffff;
         }
 
         body.light-mode {
@@ -238,7 +248,7 @@
         }
         .rank-item:hover { background: rgba(16, 185, 129, 0.05); }
         .rank-info { display: flex; align-items: center; gap: 15px; }
-        .rank-img { width: 35px; height: 35px; border-radius: 10px; object-fit: cover; }
+        .rank-img { width: 35px; height: 35px; border-radius: 10px; object-fit: cover; background: #000; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(12px); }
         .modal-content { 
@@ -322,6 +332,40 @@
         
         .bot-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .config-select { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px; padding: 5px; outline: none; }
+
+        .rank-tag {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .bg-bronze { background: linear-gradient(45deg, #8b4513, #cd7f32); }
+        .bg-silver { background: linear-gradient(45deg, #708090, #c0c0c0); }
+        .bg-gold { background: linear-gradient(45deg, #b8860b, #ffd700); color: #000; }
+        .bg-platinum { background: linear-gradient(45deg, #4682b4, #e5e4e2); color: #000; }
+        .bg-diamond { background: linear-gradient(45deg, #00bfff, #b9f2ff); color: #000; }
+        .bg-crown { background: linear-gradient(45deg, #800000, #ff4500); }
+        .bg-valiant { background: linear-gradient(45deg, #4b0082, #9370db); }
+        .bg-conqueror { background: linear-gradient(45deg, #000000, #ff0000); animation: pulse-border 2s infinite; }
+        .bg-eternal { background: linear-gradient(45deg, #ff00ff, #00ffff); color: #000; animation: pulse-glow 1.5s infinite linear; }
+
+        @keyframes pulse-border { 0% { box-shadow: 0 0 5px #ff0000; } 50% { box-shadow: 0 0 15px #ff0000; } 100% { box-shadow: 0 0 5px #ff0000; } }
+        @keyframes pulse-glow { 0% { filter: hue-rotate(0deg) brightness(1); } 50% { filter: hue-rotate(180deg) brightness(1.3); } 100% { filter: hue-rotate(360deg) brightness(1); } }
+
+        .rank-up-anim {
+            animation: rank-up-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes rank-up-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -351,11 +395,15 @@
             </div>
             <div style="flex-grow:1; margin-left:20px;">
                 <div style="display: flex; align-items: center;">
+                    <div id="display-rank-tag" class="rank-tag bg-bronze">BRONZE</div>
                     <div id="display-name" style="font-weight:bold; color:var(--primary); font-size:18px;">User</div>
                     <span id="display-best-wpm" class="best-wpm-badge">BEST: 0</span>
                 </div>
                 <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
-                <small id="xp-text" style="font-size:11px; color:var(--text-dim);">0 XP</small>
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <small id="xp-text" style="font-size:11px; color:var(--text-dim);">0 XP</small>
+                    <small id="next-rank-text" style="font-size:10px; color:var(--primary); font-weight:bold;">Next: Silver</small>
+                </div>
             </div>
         </div>
 
@@ -416,7 +464,7 @@
 
         <div class="leaderboard-footer">
             <div class="lb-title">
-                <span>🏆 อันดับสูงสุด (TOP 1000)</span>
+                <span>🏆 อันดับเซียน Typing (TOP 1000)</span>
                 <span id="lb-mode-name" style="font-size:14px; opacity:0.7;">ภาษาไทย</span>
             </div>
             <div class="lb-scroll" id="lb-list-main"></div>
@@ -446,6 +494,16 @@
             <div class="result-box"><small>พิมพ์ผิด</small><div class="result-val" id="res-wrong" style="color:var(--secondary)">0</div></div>
         </div>
         <button class="btn-p" onclick="toggleModal('result-modal', false); resetGame();">ฝึกซ้อมต่อ</button>
+    </div>
+</div>
+
+<div id="rank-up-modal" class="modal hidden">
+    <div class="modal-content rank-up-anim" style="background: linear-gradient(to bottom, #1e293b, #0f172a); border: 2px solid gold;">
+        <h1 style="color: gold; margin-bottom: 0;">CONGRATULATIONS!</h1>
+        <p style="color: var(--text-dim); margin-top: 5px;">คุณได้รับการเลื่อนขั้น</p>
+        <div id="new-rank-display" class="rank-tag bg-gold" style="font-size: 30px; padding: 10px 30px; margin: 20px 0; display: inline-block;">GOLD</div>
+        <p style="color: #fff; font-size: 14px;">ฝีมือของคุณก้าวข้ามขีดจำกัดไปอีกขั้น!</p>
+        <button class="btn-p" style="margin-top:20px; background: gold; color: black;" onclick="toggleModal('rank-up-modal', false)">รับทราบ!</button>
     </div>
 </div>
 
@@ -559,22 +617,32 @@
     let currentRoomId = null, roomUnsub = null, createModeType = 'friend';
     let botIntervals = [];
 
-    // --- Stats Visibility Persistence ---
+    const ranks = [
+        { name: "Bronze", minXp: 0, class: "bg-bronze" },
+        { name: "Silver", minXp: 10000, class: "bg-silver" },
+        { name: "Gold", minXp: 30000, class: "bg-gold" },
+        { name: "Platinum", minXp: 70000, class: "bg-platinum" },
+        { name: "Diamond", minXp: 150000, class: "bg-diamond" },
+        { name: "Crown", minXp: 300000, class: "bg-crown" },
+        { name: "Valiant", minXp: 600000, class: "bg-valiant" },
+        { name: "Conqueror", minXp: 1200000, class: "bg-conqueror" },
+        { name: "Eternal", minXp: 3000000, class: "bg-eternal" }
+    ];
+
+    function getRank(xp) {
+        for (let i = ranks.length - 1; i >= 0; i--) { if (xp >= ranks[i].minXp) return ranks[i]; }
+        return ranks[0];
+    }
+
     function initStatsVisibility() {
         const stored = localStorage.getItem('typing-stats-visible');
-        if (stored !== null) {
-            statsVisible = stored === 'true';
-        }
+        if (stored !== null) { statsVisible = stored === 'true'; }
         applyStatsVisibility();
     }
 
     function applyStatsVisibility() {
         const panel = document.getElementById('stats-panel');
-        if (statsVisible) {
-            panel.style.display = 'flex';
-        } else {
-            panel.style.display = 'none';
-        }
+        panel.style.display = statsVisible ? 'flex' : 'none';
     }
 
     function toggleStatsVisibility() { 
@@ -594,7 +662,7 @@
         if(user) {
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
-            initStatsVisibility(); // Load stats preference
+            initStatsVisibility();
             syncUserData(user); loadLeaderboard(); resetGame();
         } else {
             document.getElementById('auth-ui').classList.remove('hidden');
@@ -623,19 +691,49 @@
         } catch(e) { alert("เกิดข้อผิดพลาด!"); }
     }
 
+    let lastKnownXp = -1;
     async function syncUserData(user) {
         const doc = await db.collection("users").doc(user.uid).get();
         if(!doc.exists) return;
         const data = doc.data();
+        const xp = data.xp || 0;
+        const fallbackAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+        
+        if (lastKnownXp !== -1) {
+            const oldRank = getRank(lastKnownXp);
+            const newRank = getRank(xp);
+            if (newRank.minXp > oldRank.minXp) {
+                document.getElementById('new-rank-display').innerText = newRank.name;
+                document.getElementById('new-rank-display').className = `rank-tag ${newRank.class}`;
+                toggleModal('rank-up-modal', true);
+            }
+        }
+        lastKnownXp = xp;
+
+        const currentRank = getRank(xp);
+        const nextRankIndex = ranks.findIndex(r => r.minXp === currentRank.minXp) + 1;
+        const nextRank = ranks[nextRankIndex] || currentRank;
+
         document.getElementById('display-name').innerText = data.name || "User";
-        document.getElementById('display-avatar').src = data.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback";
+        document.getElementById('display-avatar').src = data.photo || fallbackAvatar;
+        
+        const rankTag = document.getElementById('display-rank-tag');
+        rankTag.innerText = currentRank.name;
+        rankTag.className = `rank-tag ${currentRank.class}`;
+
         let bestScore = (data.best && data.best[currentMode]) ? data.best[currentMode] : 0;
         document.getElementById('display-best-wpm').innerText = `BEST: ${bestScore}`;
-        const xp = data.xp || 0;
+        
         const lv = Math.floor(Math.sqrt(xp / 5000)) + 1;
         document.getElementById('display-lvl-badge').innerText = `LV.${lv}`;
-        document.getElementById('xp-fill').style.width = `${((xp % 5000) / 5000) * 100}%`;
+        
+        const xpInCurrentRank = xp - currentRank.minXp;
+        const xpNeededForNext = nextRank.minXp - currentRank.minXp;
+        const progress = nextRank === currentRank ? 100 : (xpInCurrentRank / xpNeededForNext) * 100;
+        
+        document.getElementById('xp-fill').style.width = `${progress}%`;
         document.getElementById('xp-text').innerText = `${xp.toLocaleString()} XP`;
+        document.getElementById('next-rank-text').innerText = nextRank === currentRank ? "MAX RANK" : `Next: ${nextRank.name}`;
     }
 
     function switchPracticeLevel(lv) {
@@ -648,28 +746,19 @@
     function generateWords(forcedDiff = null) {
         const total = 1000; let pool = [];
         const diff = forcedDiff || (currentGameType === 'race' ? 1 : practiceLevel);
-
         if (diff === 1) {
             if (currentMode === 'th') {
                 while (pool.length < total) {
                     for (let i = 0; i < 8 && pool.length < total; i++) pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
                     for (let j = 0; j < 2 && pool.length < total; j++) pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
                 }
-            } else { 
-                for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); 
-            }
+            } else { for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); }
             return pool;
         }
-
         if (currentMode === 'th') {
-            let sourceSet = (diff === 2) ? th_2_syl : 
-                            (diff === 3) ? [...th_2_syl, ...th_race_lv3] : 
-                            (diff === 4) ? [...th_race_lv3, ...th_race_lv4] : 
-                            [...th_race_lv4, ...th_race_lv5];
+            let sourceSet = (diff === 2) ? th_2_syl : (diff === 3) ? [...th_2_syl, ...th_race_lv3] : (diff === 4) ? [...th_race_lv3, ...th_race_lv4] : [...th_race_lv4, ...th_race_lv5];
             for (let i = 0; i < total; i++) pool.push(sourceSet[Math.floor(Math.random() * sourceSet.length)]);
-        } else {
-            for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
-        }
+        } else { for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); }
         return pool;
     }
 
@@ -679,7 +768,6 @@
         botIntervals.forEach(clearInterval); botIntervals = [];
         document.getElementById('typing-input').classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
-        
         if(currentGameType === 'race') {
             document.getElementById('timer-box').classList.add('hidden');
             document.getElementById('practice-level-box').classList.add('hidden');
@@ -692,13 +780,11 @@
             document.getElementById('stat-label').innerText = "WPM/WORDS";
             document.getElementById('timer').innerText = "60s";
             document.getElementById('race-section').classList.add('hidden');
-            document.getElementById('reset-btn').classList.remove('hidden');
         }
         document.getElementById('wpm-live').innerText = "0";
         document.getElementById('wrong-live').innerText = "0";
         document.getElementById('typing-input').value = "";
         document.getElementById('typing-input').disabled = false;
-        
         gameWords = generateWords();
         document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
         document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
@@ -722,11 +808,7 @@
     });
 
     document.getElementById('typing-input').addEventListener('input', (e) => {
-        if (e.inputType === 'insertFromPaste' || !e.isTrusted) {
-            e.target.value = "";
-            return;
-        }
-
+        if (e.inputType === 'insertFromPaste' || !e.isTrusted) { e.target.value = ""; return; }
         const val = e.target.value;
         const targetWord = gameWords[currentWordIndex];
         const wordEl = document.getElementById(`w-${currentWordIndex}`);
@@ -773,10 +855,22 @@
             const ref = db.collection("users").doc(user.uid);
             const doc = await ref.get(); const data = doc.data();
             let bests = data.best || { th: 0, en: 0 };
+            
+            // Fixed Profile Update on Leaderboard
+            const profileData = { 
+                name: data.name, 
+                wpm: (correctWords > (bests[currentMode] || 0)) ? correctWords : (bests[currentMode] || 0), 
+                photo: data.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
+                xp: (data.xp || 0) + xpEarned 
+            };
+            
             if(correctWords > (bests[currentMode] || 0)) {
                 bests[currentMode] = correctWords;
-                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set({ name: data.name, wpm: correctWords, photo: data.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback" }, {merge: true});
+                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).set(profileData, {merge: true});
+            } else {
+                await db.collection(`leaderboard_${currentMode}`).doc(user.uid).update({ xp: profileData.xp }).catch(()=>{});
             }
+            
             await ref.update({ xp: (data.xp || 0) + xpEarned, best: bests });
             syncUserData(user); loadLeaderboard();
         }
@@ -799,7 +893,7 @@
             const rWords = generateWords(diff); 
             const u = auth.currentUser; 
             const d = (await db.collection("users").doc(u.uid).get()).data();
-            let players = { [u.uid]: { name: d.name, progress: 0, count: 0, photo: d.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback", ready: true, isBot: false } };
+            let players = { [u.uid]: { name: d.name, progress: 0, count: 0, photo: d.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.uid}`, ready: true, isBot: false } };
             if(createModeType === 'bot') {
                 const bLvl = parseInt(document.getElementById('bot-lvl').value);
                 for(let i=1; i<=parseInt(document.getElementById('bot-count').value); i++) {
@@ -820,7 +914,7 @@
         currentGameType = 'race'; 
         const u = auth.currentUser; 
         const d = (await db.collection("users").doc(u.uid).get()).data();
-        await rRef.update({ [`players.${u.uid}`]: { name: d.name, progress: 0, count: 0, photo: d.photo || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback", ready: false, isBot: false } });
+        await rRef.update({ [`players.${u.uid}`]: { name: d.name, progress: 0, count: 0, photo: d.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.uid}`, ready: false, isBot: false } });
         enterRace(rid);
     }
 
@@ -830,29 +924,20 @@
         document.getElementById('room-id-display').innerText = `ROOM: ${rid}`;
         document.getElementById('race-controls').classList.remove('hidden');
         resetGame();
-        
         if(roomUnsub) roomUnsub();
         roomUnsub = db.collection("rooms").doc(rid).onSnapshot(doc => {
             const data = doc.data(); if(!data) return;
             const myId = auth.currentUser.uid;
             const isOwner = data.owner === myId;
-            
             document.getElementById('start-race-btn').classList.toggle('hidden', !isOwner || data.status !== 'waiting');
             document.getElementById('ready-race-btn').classList.toggle('hidden', isOwner || data.players[myId].ready || data.status !== 'waiting');
             document.getElementById('wait-msg').classList.toggle('hidden', isOwner || !data.players[myId].ready || data.status !== 'waiting');
-
             const sortedPlayerIds = Object.keys(data.players).sort(); 
             document.getElementById('race-lanes').innerHTML = sortedPlayerIds.map(pid => {
                 const p = data.players[pid];
-                return `
-                <div class="race-lane">
-                    <div class="race-car" style="left:${(p.progress / 100) * 85}%;">
-                        <img src="${p.photo}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" style="width:24px; height:24px; border-radius:50%; border:1px solid ${p.ready ? '#10b981' : '#64748b'};">
-                        <span>${p.name} (${p.count}/100) ${p.ready ? '✅' : ''}</span>
-                    </div>
-                </div>`;
+                const pPhoto = p.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${pid}`;
+                return `<div class="race-lane"><div class="race-car" style="left:${(p.progress / 100) * 85}%;"><img src="${pPhoto}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" style="width:24px; height:24px; border-radius:50%; border:1px solid ${p.ready ? '#10b981' : '#64748b'};"><span>${p.name} (${p.count}/100) ${p.ready ? '✅' : ''}</span></div></div>`;
             }).join('');
-            
             if(data.status === 'countdown') {
                 document.getElementById('traffic-light-container').classList.remove('hidden');
                 document.getElementById('race-controls').classList.add('hidden');
@@ -868,10 +953,7 @@
                 if(isOwner && data.isBotGame) startBots(data.players);
             }
             if(data.status === 'finished') { showRaceResults(data.players); }
-            if(data.status === 'waiting' && isPlaying) { 
-                isPlaying = false;
-                resetGame(); 
-            }
+            if(data.status === 'waiting' && isPlaying) { isPlaying = false; resetGame(); }
         });
     }
 
@@ -916,7 +998,10 @@
         isPlaying = false; botIntervals.forEach(clearInterval);
         const sorted = Object.keys(players).map(id => ({id, ...players[id]})).sort((a,b) => b.count - a.count);
         document.getElementById('race-result-header').innerText = (sorted[0].id === auth.currentUser.uid) ? "YOU WIN! 🏆" : "GAME OVER! 💀";
-        document.getElementById('race-result-list').innerHTML = sorted.map((p, i) => `<div class="rank-item"><div class="rank-info"><span>${i+1}</span><img src="${p.photo}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" class="rank-img"><span>${p.name}</span></div><b>${p.count} Correct</b></div>`).join('');
+        document.getElementById('race-result-list').innerHTML = sorted.map((p, i) => {
+            const pPhoto = p.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${p.id}`;
+            return `<div class="rank-item"><div class="rank-info"><span>${i+1}</span><img src="${pPhoto}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" class="rank-img"><span>${p.name}</span></div><b>${p.count} Correct</b></div>`;
+        }).join('');
         toggleModal('race-result-modal', true);
     }
 
@@ -971,27 +1056,19 @@
         const newName = document.getElementById('settings-name').value.trim();
         const previewSrc = document.getElementById('settings-preview').src;
         let url = previewSrc;
-        
         if(previewSrc.startsWith('data:')) {
             try {
                 const ref = storage.ref().child(`avatars/${u.uid}`);
                 const task = await ref.putString(previewSrc, 'data_url');
                 url = await task.ref.getDownloadURL();
-            } catch(e) { 
-                console.log("Storage error, using base64 instead");
-                url = previewSrc; 
-            }
+            } catch(e) { url = previewSrc; }
         }
-        
         const up = { photo: url }; 
         if(newName) up.name = newName;
         await db.collection("users").doc(u.uid).update(up);
         await db.collection(`leaderboard_th`).doc(u.uid).update(up).catch(()=>{});
         await db.collection(`leaderboard_en`).doc(u.uid).update(up).catch(()=>{});
-        
-        syncUserData(u); 
-        toggleModal('settings-modal', false);
-        alert("บันทึกข้อมูลสำเร็จ!");
+        syncUserData(u); toggleModal('settings-modal', false); alert("บันทึกข้อมูลสำเร็จ!");
     }
 
     async function loadLeaderboard() {
@@ -999,7 +1076,18 @@
         let html = ''; let r = 1;
         snap.forEach(doc => { 
             const d = doc.data(); 
-            html += `<div class="rank-item"><div class="rank-info"><span>${r++}</span><img src="${d.photo || 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback'}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" class="rank-img"><span>${d.name}</span></div><b>${d.wpm} WPM</b></div>`; 
+            const rankInfo = getRank(d.xp || 0);
+            const userPhoto = d.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${doc.id}`;
+            html += `
+            <div class="rank-item">
+                <div class="rank-info">
+                    <span style="width: 25px;">${r++}</span>
+                    <img src="${userPhoto}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'" class="rank-img">
+                    <span class="rank-tag ${rankInfo.class}">${rankInfo.name}</span>
+                    <span style="font-weight:bold;">${d.name}</span>
+                </div>
+                <b>${d.wpm} WPM</b>
+            </div>`; 
         });
         document.getElementById('lb-list-main').innerHTML = html || '<p style="text-align:center; opacity:0.3">No Data</p>';
     }
