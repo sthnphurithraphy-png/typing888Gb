@@ -74,7 +74,6 @@
         }
 
         .hidden { display: none !important; }
-        .invisible-stats { opacity: 0; pointer-events: none; transform: scale(0.9); }
 
         .profile-bar { 
             display: flex; 
@@ -560,6 +559,30 @@
     let currentRoomId = null, roomUnsub = null, createModeType = 'friend';
     let botIntervals = [];
 
+    // --- Stats Visibility Persistence ---
+    function initStatsVisibility() {
+        const stored = localStorage.getItem('typing-stats-visible');
+        if (stored !== null) {
+            statsVisible = stored === 'true';
+        }
+        applyStatsVisibility();
+    }
+
+    function applyStatsVisibility() {
+        const panel = document.getElementById('stats-panel');
+        if (statsVisible) {
+            panel.style.display = 'flex';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function toggleStatsVisibility() { 
+        statsVisible = !statsVisible; 
+        localStorage.setItem('typing-stats-visible', statsVisible);
+        applyStatsVisibility();
+    }
+
     function toggleTheme() {
         const isLight = document.body.classList.toggle('light-mode');
         localStorage.setItem('typing-theme', isLight ? 'light' : 'dark');
@@ -571,6 +594,7 @@
         if(user) {
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
+            initStatsVisibility(); // Load stats preference
             syncUserData(user); loadLeaderboard(); resetGame();
         } else {
             document.getElementById('auth-ui').classList.remove('hidden');
@@ -621,16 +645,11 @@
         resetGame();
     }
 
-    // --- แก้ไข Logic การสร้างคำใหม่ ---
     function generateWords(forcedDiff = null) {
         const total = 1000; let pool = [];
-        
-        // ถ้า forcedDiff มีค่า แสดงว่าเป็นโหมด Race หรือถูกสั่งเปลี่ยน Diff พิเศษ
-        // ถ้าไม่มีค่า ให้ยึดตาม practiceLevel
         const diff = forcedDiff || (currentGameType === 'race' ? 1 : practiceLevel);
 
         if (diff === 1) {
-            // เลเวล 1 คือของเดิม (ไทย: สุ่มคำ 1 พยางค์ 80% และ 2 พยางค์ 20%)
             if (currentMode === 'th') {
                 while (pool.length < total) {
                     for (let i = 0; i < 8 && pool.length < total; i++) pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
@@ -642,7 +661,6 @@
             return pool;
         }
 
-        // เลเวล 2 - 5
         if (currentMode === 'th') {
             let sourceSet = (diff === 2) ? th_2_syl : 
                             (diff === 3) ? [...th_2_syl, ...th_race_lv3] : 
@@ -650,7 +668,6 @@
                             [...th_race_lv4, ...th_race_lv5];
             for (let i = 0; i < total; i++) pool.push(sourceSet[Math.floor(Math.random() * sourceSet.length)]);
         } else {
-            // English (ยังคงใช้ en_pool เดิมทุุกระดับ หรือสามารถขยายเพิ่มในอนาคตได้)
             for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
         }
         return pool;
@@ -682,7 +699,6 @@
         document.getElementById('typing-input').value = "";
         document.getElementById('typing-input').disabled = false;
         
-        // โหลดคำศัพท์ตามโหมดและเลเวล
         gameWords = generateWords();
         document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
         document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
@@ -917,8 +933,6 @@
             updatedPlayers[pid].count = 0;
             updatedPlayers[pid].ready = (pid === rData.owner || updatedPlayers[pid].isBot);
         });
-        
-        // เมื่อกลับเข้า Lobby ให้สร้างคำใหม่โดยอิงจากระดับความยากที่ตั้งไว้ของห้องนั้นๆ
         await rRef.update({ status: 'waiting', players: updatedPlayers, words: generateWords(rData.wordDiff) });
         document.getElementById('race-controls').classList.remove('hidden');
         resetGame();
@@ -990,7 +1004,6 @@
         document.getElementById('lb-list-main').innerHTML = html || '<p style="text-align:center; opacity:0.3">No Data</p>';
     }
 
-    function toggleStatsVisibility() { statsVisible = !statsVisible; document.getElementById('stats-panel').classList.toggle('invisible-stats', !statsVisible); }
     function switchMode(m) { 
         currentMode = m; currentGameType = 'practice'; 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); 
