@@ -99,7 +99,7 @@
         .xp-bar-bg { width: 100%; height: 8px; background: rgba(0,0,0,0.2); border-radius: 10px; margin-top: 5px; overflow: hidden; }
         .xp-bar-fill { height: 100%; background: var(--xp-color); width: 0%; transition: 0.8s; box-shadow: 0 0 10px var(--xp-color); }
 
-        .mode-selector { display: flex; gap: 12px; margin-bottom: 20px; }
+        .mode-selector { display: flex; gap: 12px; margin-bottom: 12px; }
         .mode-btn { 
             flex: 1; 
             padding: 14px; 
@@ -117,6 +117,34 @@
             color: var(--primary); 
             background: rgba(16, 185, 129, 0.1); 
             box-shadow: 0 0 20px var(--primary-glow); 
+        }
+
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.1);
+            padding: 8px;
+            border-radius: 15px;
+        }
+        .lvl-btn {
+            padding: 6px 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-dim);
+            transition: 0.2s;
+        }
+        .lvl-btn:hover { border-color: var(--primary); }
+        .lvl-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
         }
         
         .word-display-container { 
@@ -338,6 +366,14 @@
             <div class="mode-btn" id="btn-race" onclick="openRaceLobby()">🏎️ โหมดปะลอง</div>
         </div>
 
+        <div id="practice-level-box" class="level-selector">
+            <div class="lvl-btn active" id="lvl-p-1" onclick="switchPracticeLevel(1)">LV.1</div>
+            <div class="lvl-btn" id="lvl-p-2" onclick="switchPracticeLevel(2)">LV.2</div>
+            <div class="lvl-btn" id="lvl-p-3" onclick="switchPracticeLevel(3)">LV.3</div>
+            <div class="lvl-btn" id="lvl-p-4" onclick="switchPracticeLevel(4)">LV.4</div>
+            <div class="lvl-btn" id="lvl-p-5" onclick="switchPracticeLevel(5)">LV.5</div>
+        </div>
+
         <div id="race-section" class="hidden" style="margin-bottom:20px; background:rgba(16, 185, 129, 0.1); padding:20px; border-radius:20px; border: 1px solid var(--primary); position: relative;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span id="room-id-display" style="color:var(--primary); font-weight:bold;">ROOM: -</span>
@@ -519,6 +555,7 @@
     const en_pool = ["always", "around", "become", "better", "bright", "change", "coffee", "create", "dream", "energy", "family", "friend", "future", "garden", "growth", "happy", "health", "inside", "journey", "kindly", "learn", "light", "listen", "memory", "morning", "nature", "online", "people", "planet", "simple", "smile", "strong", "system", "thanks", "travel", "update", "vision", "window", "wonder", "world"];
     
     let currentMode = 'th', currentGameType = 'practice', isPlaying = false, statsVisible = true;
+    let practiceLevel = 1;
     let timer = null, timeLeft = 60, correctWords = 0, wrongWords = 0, currentWordIndex = 0, gameWords = [];
     let currentRoomId = null, roomUnsub = null, createModeType = 'friend';
     let botIntervals = [];
@@ -577,20 +614,45 @@
         document.getElementById('xp-text').innerText = `${xp.toLocaleString()} XP`;
     }
 
+    function switchPracticeLevel(lv) {
+        practiceLevel = lv;
+        document.querySelectorAll('.lvl-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`lvl-p-${lv}`).classList.add('active');
+        resetGame();
+    }
+
+    // --- แก้ไข Logic การสร้างคำใหม่ ---
     function generateWords(forcedDiff = null) {
         const total = 1000; let pool = [];
-        if (currentGameType !== 'race') {
+        
+        // ถ้า forcedDiff มีค่า แสดงว่าเป็นโหมด Race หรือถูกสั่งเปลี่ยน Diff พิเศษ
+        // ถ้าไม่มีค่า ให้ยึดตาม practiceLevel
+        const diff = forcedDiff || (currentGameType === 'race' ? 1 : practiceLevel);
+
+        if (diff === 1) {
+            // เลเวล 1 คือของเดิม (ไทย: สุ่มคำ 1 พยางค์ 80% และ 2 พยางค์ 20%)
             if (currentMode === 'th') {
                 while (pool.length < total) {
                     for (let i = 0; i < 8 && pool.length < total; i++) pool.push(th_1_syl[Math.floor(Math.random() * th_1_syl.length)]);
                     for (let j = 0; j < 2 && pool.length < total; j++) pool.push(th_2_syl[Math.floor(Math.random() * th_2_syl.length)]);
                 }
-            } else { for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); }
+            } else { 
+                for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]); 
+            }
             return pool;
         }
-        const diff = forcedDiff || parseInt(document.getElementById('word-difficulty').value);
-        let sourceSet = (diff === 1) ? th_1_syl : (diff === 2) ? [...th_1_syl, ...th_2_syl] : (diff === 3) ? [...th_2_syl, ...th_race_lv3] : (diff === 4) ? [...th_race_lv3, ...th_race_lv4] : [...th_race_lv4, ...th_race_lv5];
-        for (let i = 0; i < total; i++) pool.push(sourceSet[Math.floor(Math.random() * sourceSet.length)]);
+
+        // เลเวล 2 - 5
+        if (currentMode === 'th') {
+            let sourceSet = (diff === 2) ? th_2_syl : 
+                            (diff === 3) ? [...th_2_syl, ...th_race_lv3] : 
+                            (diff === 4) ? [...th_race_lv3, ...th_race_lv4] : 
+                            [...th_race_lv4, ...th_race_lv5];
+            for (let i = 0; i < total; i++) pool.push(sourceSet[Math.floor(Math.random() * sourceSet.length)]);
+        } else {
+            // English (ยังคงใช้ en_pool เดิมทุุกระดับ หรือสามารถขยายเพิ่มในอนาคตได้)
+            for (let i = 0; i < total; i++) pool.push(en_pool[Math.floor(Math.random() * en_pool.length)]);
+        }
         return pool;
     }
 
@@ -600,13 +662,16 @@
         botIntervals.forEach(clearInterval); botIntervals = [];
         document.getElementById('typing-input').classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
+        
         if(currentGameType === 'race') {
             document.getElementById('timer-box').classList.add('hidden');
+            document.getElementById('practice-level-box').classList.add('hidden');
             document.getElementById('stat-label').innerText = "CORRECT";
             document.getElementById('typing-input').classList.add('hidden');
             document.getElementById('reset-btn').classList.add('hidden');
         } else {
             document.getElementById('timer-box').classList.remove('hidden');
+            document.getElementById('practice-level-box').classList.remove('hidden');
             document.getElementById('stat-label').innerText = "WPM/WORDS";
             document.getElementById('timer').innerText = "60s";
             document.getElementById('race-section').classList.add('hidden');
@@ -616,6 +681,8 @@
         document.getElementById('wrong-live').innerText = "0";
         document.getElementById('typing-input').value = "";
         document.getElementById('typing-input').disabled = false;
+        
+        // โหลดคำศัพท์ตามโหมดและเลเวล
         gameWords = generateWords();
         document.getElementById('word-list-wrapper').innerHTML = gameWords.map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join('');
         document.getElementById('word-list-wrapper').style.transform = `translateY(0px)`;
@@ -633,14 +700,12 @@
         }
     }
 
-    // --- FIX: BLOCK PASTE & PREVENT CHEATING ---
     document.getElementById('typing-input').addEventListener('paste', (e) => {
         e.preventDefault();
         alert("ห้ามลักไก่! ต้องพิมพ์เองเท่านั้นนะครับ");
     });
 
     document.getElementById('typing-input').addEventListener('input', (e) => {
-        // ตรวจสอบว่าเป็น Event ที่เกิดจากผู้ใช้พิมพ์จริงหรือไม่ (Anti-Script)
         if (e.inputType === 'insertFromPaste' || !e.isTrusted) {
             e.target.value = "";
             return;
@@ -852,6 +917,8 @@
             updatedPlayers[pid].count = 0;
             updatedPlayers[pid].ready = (pid === rData.owner || updatedPlayers[pid].isBot);
         });
+        
+        // เมื่อกลับเข้า Lobby ให้สร้างคำใหม่โดยอิงจากระดับความยากที่ตั้งไว้ของห้องนั้นๆ
         await rRef.update({ status: 'waiting', players: updatedPlayers, words: generateWords(rData.wordDiff) });
         document.getElementById('race-controls').classList.remove('hidden');
         resetGame();
